@@ -43,14 +43,59 @@ When enabled (`/reflect on`) and session ends:
 
 ## Resume Flow (`/reflect resume`)
 
-1. Read `.claude/memories/sessions/latest.md`
-2. Present session summary:
-   - What was being worked on
-   - Tasks completed / incomplete
-   - Bugs and fixes
-   - Where you left off
-3. Ask: "Continue from here?"
-4. Load context and proceed with incomplete tasks
+### Step 1: Gather Context from All Sources
+
+Execute these commands to build a complete picture:
+
+```bash
+# 1. Recent git history (last 20 commits)
+git log --oneline -20
+
+# 2. Uncommitted changes (work in progress)
+git diff --stat
+
+# 3. Modified but unstaged files
+git status --short
+```
+
+### Step 2: Read Memory Files
+
+1. Read `.claude/memories/sessions/latest.md` - Last session state
+2. Read `.claude/memories/progress-notes.md` - Ongoing work summary
+3. Read `.claude/memories/general.md` - Project preferences
+
+### Step 3: Present Combined Context
+
+Display to user:
+
+```markdown
+## Session Resume
+
+**Last Session:** [date from latest.md]
+
+### Recent Git Activity (last 20 commits)
+[output from git log --oneline -20]
+
+### Uncommitted Changes
+[output from git diff --stat, or "None" if clean]
+
+### From Progress Notes
+- **Last worked on:** [from progress-notes.md]
+- **Completed:** [list]
+- **In progress:** [list]
+- **Blockers:** [if any]
+
+### From Session Memory
+- **Context:** [from latest.md]
+- **Decisions made:** [list]
+- **Next steps:** [list]
+```
+
+### Step 4: Confirm and Continue
+
+Ask: "Continue from here?"
+
+If yes, load context and proceed with incomplete tasks.
 
 ## Storage Locations
 

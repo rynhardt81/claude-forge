@@ -359,21 +359,46 @@ When session ends (manually or at limit):
 
 `/reflect resume` enhanced for autonomous development:
 
-1. Reads `.claude/memories/sessions/latest.md`
-2. Reads `.claude/memories/progress-notes.md`
-3. Queries feature database for state
+1. **Git History** (ground truth for what was actually done):
+   ```bash
+   git log --oneline -20      # Recent commits
+   git diff --stat            # Uncommitted changes
+   git status --short         # Modified files
+   ```
+
+2. **Memory Files** (human-readable context):
+   - `.claude/memories/sessions/latest.md`
+   - `.claude/memories/progress-notes.md`
+
+3. **Feature Database** (autonomous mode only):
+   - `feature_get_stats()` for progress
+   - `feature_get_next()` for current work
+
 4. Presents combined context:
    ```markdown
    ## Resume Context
 
    **Last Session:** 2024-01-15 14:30
+
+   ### Recent Git Activity
+   abc1234 feat(cart): Add quantity selector
+   def5678 feat(cart): Display cart items
+   ghi9012 fix(auth): Session persistence
+   ...
+
+   ### Uncommitted Changes
+   M src/components/Cart.tsx
+   M src/store/cartStore.ts
+
+   ### Progress (Autonomous Mode)
    **Progress:** 45/92 features (48.9%)
    **Next Feature:** ID-46 "Add to cart"
    **Testing Mode:** Standard
 
-   **Recent Work:**
+   ### From Progress Notes
    - Completed cart display features
    - Established Zustand for state
+   - Next: implement quantity updates
 
    Continue from here?
    ```

@@ -143,16 +143,18 @@ Use the `/reflect` skill for session management and continuity:
 | `/reflect` | Capture learnings and session state |
 | `/reflect on` | Enable auto-reflection at session end |
 
-**Storage locations:**
+**What `/reflect resume` gathers:**
 
-| File | Purpose |
-|------|---------|
-| `.claude/memories/sessions/latest.md` | Most recent session state |
-| `.claude/memories/sessions/YYYY-MM-DD.md` | Date-stamped session archives |
-| `.claude/memories/general.md` | General preferences and learnings |
-| `.claude/memories/progress-notes.md` | Ongoing work summaries and blockers |
+| Source | Purpose |
+|--------|---------|
+| `git log --oneline -20` | Recent commits (ground truth of work done) |
+| `git diff --stat` | Uncommitted changes (work in progress) |
+| `git status` | Modified files |
+| `.claude/memories/sessions/latest.md` | Last session state |
+| `.claude/memories/progress-notes.md` | Ongoing work summary |
+| `.claude/memories/general.md` | Project preferences |
 
-**What gets captured:**
+**What gets captured at session end (`/reflect`):**
 * Session summaries and context
 * Decisions made and rationale
 * Blockers encountered
