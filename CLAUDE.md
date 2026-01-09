@@ -12,6 +12,7 @@ This file provides Claude Code with context about this framework and how to use 
 - **Skills** - Reusable workflows for common tasks
 - **Templates** - Standardized document formats
 - **Security Model** - Safe autonomous operation boundaries
+- **Task Management** - Epic/task tracking with dependencies for parallel work
 - **Autonomous Development** - Full project implementation from idea to code
 
 ---
@@ -22,15 +23,20 @@ This file provides Claude Code with context about this framework and how to use 
 
 | Command | Description |
 |---------|-------------|
-| `/new-project "idea"` | Full workflow: framework + PRD + ADRs + features |
+| `/new-project "idea"` | Full workflow: framework + PRD + ADRs + tasks |
 | `/new-project --current` | Same, but analyzes existing codebase first |
 | `/new-project --autonomous` | Add feature database for automated implementation |
 | `/new-project --minimal` | Framework setup only (skip documentation) |
-| `/implement-features` | Implement features from database one at a time |
-| `/implement-features --mode=yolo` | Fast mode (lint only, no browser tests) |
-| `/implement-features --resume` | Resume from last session |
 | `/reflect` | Capture session learnings and context |
-| `/reflect resume` | Resume from last session with context |
+| `/reflect resume` | Resume from last session with full context |
+| `/reflect resume E01` | Resume specific epic |
+| `/reflect resume T002` | Resume specific task |
+| `/reflect status` | Show task/epic status overview |
+| `/reflect status --ready` | Show tasks available to work on |
+| `/reflect status --locked` | Show locked tasks |
+| `/reflect unlock T002` | Force unlock a stale task |
+| `/reflect config` | Show/update configuration |
+| `/implement-features` | Implement features from database (autonomous mode) |
 | `/pdf <command>` | PDF processing (extract, merge, split, fill, ocr, create) |
 
 ### Key Locations
@@ -43,7 +49,8 @@ This file provides Claude Code with context about this framework and how to use 
 | `reference/` | Architecture documentation |
 | `security/` | Security model and allowlist |
 | `mcp-servers/` | MCP server implementations |
-| `.claude/features/features.db` | Feature tracking database |
+| `docs/tasks/registry.json` | Task/epic registry |
+| `docs/epics/` | Epic and task files |
 | `.claude/memories/progress-notes.md` | Session continuity notes |
 
 ---
@@ -52,7 +59,7 @@ This file provides Claude Code with context about this framework and how to use 
 
 ### Key Principle
 
-**All projects get full documentation.** The `/new-project` skill runs a continuous workflow that creates PRD, architecture decisions, and feature planning. This documentation is what makes AI-assisted development effective.
+**All projects get full documentation.** The `/new-project` skill runs a continuous workflow that creates PRD, architecture decisions, and task planning. This documentation is what makes AI-assisted development effective.
 
 ### Standard Mode (Default)
 
@@ -69,9 +76,9 @@ This runs through all phases:
 | 0 | Framework setup | `.claude/` structure, CLAUDE.md, memories |
 | 1 | Requirements discovery | `docs/prd.md` |
 | 2 | Architecture & standards | ADRs, populated reference docs |
-| 3 | Feature planning | `docs/feature-breakdown.md` |
+| 3 | Task planning | `docs/epics/`, `docs/tasks/registry.json` |
 
-After Phase 3, your project is ready for manual development using `/new-feature`, `/fix-bug`, etc.
+After Phase 3, your project is ready for development using `/reflect resume T001`.
 
 ### Existing Project Mode
 
@@ -97,7 +104,7 @@ Add `--autonomous` for automated implementation tracking:
 ```
 
 This adds Phases 4-5:
-- Feature database (`features.db`) instead of markdown
+- Feature database (`features.db`) for MCP server
 - MCP server setup for automation
 - Ready for `/implement-features`
 
@@ -111,39 +118,142 @@ Use `--minimal` if you only want framework setup without documentation:
 
 This only runs Phase 0 (framework setup) and stops.
 
-### Implementing Features
+---
 
-Use `/implement-features` to implement the feature database:
+## Task Management
+
+### Epic/Task Structure
+
+Projects are organized into epics (major feature areas) containing atomic tasks:
 
 ```
-/implement-features              # Standard mode (full testing)
-/implement-features --mode=yolo  # Fast mode (lint only)
-/implement-features --mode=hybrid # Critical features tested only
-/implement-features --resume     # Resume from last session
+docs/epics/
+├── E01-authentication/
+│   ├── E01-authentication.md      # Epic file
+│   └── tasks/
+│       ├── T001-setup-auth.md     # Task files
+│       ├── T002-login-form.md
+│       └── T003-session-mgmt.md
+├── E02-dashboard/
+│   └── ...
 ```
 
-The implementation loop:
-1. Get next feature from database
-2. Run regression tests (1-2 passing features)
-3. Implement the feature
-4. Verify with tests
-5. Mark as passing
-6. Git commit
-7. Repeat (checkpoint every 10 features)
+### Task States
 
-### Testing Modes
+| Status | Description |
+|--------|-------------|
+| `pending` | Dependencies not met yet |
+| `ready` | All dependencies complete, can be started |
+| `in_progress` | Currently being worked on (locked) |
+| `continuation` | Partially complete, needs resume |
+| `completed` | Done |
 
-| Mode | Testing | Speed | Use Case |
-|------|---------|-------|----------|
-| Standard | Full browser automation | ~5-10 min/feature | Production |
-| YOLO | Lint + type-check only | ~1-2 min/feature | Prototyping |
-| Hybrid | Critical features only | ~3-5 min/feature | Internal tools |
+### Dependencies
+
+- **Epic-Level:** E02 depends on E01 completing first
+- **Task-Level:** T002 depends on T001 within same epic
+- **Cross-Epic:** T010 may depend on T003 from different epic
+
+### Parallel Work
+
+Multiple agents can work on independent tasks simultaneously:
+
+```
+Agent 1: /reflect resume T001  # Works on authentication setup
+Agent 2: /reflect resume T010  # Works on dashboard (if no deps on T001)
+```
+
+The registry tracks locks to prevent conflicts.
+
+### Lock Management
+
+Tasks are locked when an agent starts work. If a session crashes:
+
+```
+/reflect status --locked       # See locked tasks
+/reflect unlock T002           # Force unlock stale task
+```
+
+Locks expire after the configured timeout (default: 1 hour).
 
 ---
 
-## Feature Categories
+## Session Continuity
 
-Features are organized into 20 categories (A-T):
+### Resume Commands
+
+| Command | What It Does |
+|---------|--------------|
+| `/reflect resume` | Full context resume (git history, progress notes, registry) |
+| `/reflect resume E01` | Resume specific epic, suggests next task |
+| `/reflect resume T002` | Resume specific task, loads minimal context |
+
+### Context Budget
+
+Resume operations are optimized to use minimal context:
+
+| Operation | Target | Max |
+|-----------|--------|-----|
+| General resume | 8k tokens | 15k |
+| Epic resume | 5k tokens | 10k |
+| Task resume | 3k tokens | 6k |
+
+This leaves 185k+ tokens for actual work.
+
+### State Persistence
+
+State is preserved via:
+
+1. **Task Registry** - `docs/tasks/registry.json`
+   - Epic/task status
+   - Dependencies
+   - Locks
+
+2. **Task Files** - `docs/epics/*/tasks/*.md`
+   - Continuation context
+   - Resume point
+   - Decisions made
+
+3. **Git Commits** - Source control
+   - All code changes
+   - Task IDs in commit messages
+
+4. **Progress Notes** - `.claude/memories/progress-notes.md`
+   - Session summaries
+   - Blockers encountered
+
+---
+
+## Configuration
+
+### View Configuration
+
+```
+/reflect config
+```
+
+### Update Settings
+
+```
+/reflect config lockTimeout 1800        # 30 minute lock timeout
+/reflect config maxParallelAgents 5     # Allow 5 concurrent workers
+/reflect config autoAssignNextTask false
+```
+
+### Configuration Options
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `lockTimeout` | 3600 | Seconds before lock is stale |
+| `allowManualUnlock` | true | Allow /reflect unlock |
+| `maxParallelAgents` | 3 | Max concurrent task locks |
+| `autoAssignNextTask` | true | Auto-suggest next task |
+
+---
+
+## Task Categories
+
+Tasks are organized into 20 categories (A-T):
 
 | Code | Category | Description |
 |------|----------|-------------|
@@ -198,49 +308,6 @@ See `security/` directory for:
 
 ---
 
-## Session Continuity
-
-### State Persistence
-
-State is preserved across sessions via three bridges:
-
-1. **Feature Database** - `.claude/features/features.db`
-   - Which features are complete
-   - Priority and ordering
-   - Test steps
-
-2. **Git Commits** - Source control
-   - All code changes
-   - Feature IDs in commit messages
-
-3. **Progress Notes** - `.claude/memories/progress-notes.md`
-   - Session summaries
-   - Decisions made
-   - Blockers encountered
-   - Human-readable context
-
-### Resuming Work
-
-After a session ends, resume with:
-
-```
-/implement-features --resume
-```
-
-Or use the reflect skill:
-
-```
-/reflect resume
-```
-
-This will:
-1. Read progress notes for context
-2. Query database for current state
-3. Review recent git commits
-4. Continue from where you left off
-
----
-
 ## Agent Personas
 
 ### Primary Agents
@@ -250,7 +317,7 @@ This will:
 | @developer | Implementation, coding | Feature development |
 | @architect | System design, ADRs | Technical decisions |
 | @project-manager | PRD, scope, priorities | Project planning |
-| @scrum-master | Feature breakdown, tracking | Sprint planning |
+| @scrum-master | Task breakdown, tracking | Sprint planning |
 | @quality-engineer | Testing, browser automation | Verification |
 | @security-boss | Security features, audits | Auth, payments |
 
@@ -266,42 +333,6 @@ Use `@agent-name` to invoke a specific persona:
 
 ---
 
-## MCP Servers
-
-### Feature Tracking MCP
-
-Provides tools for feature database operations:
-
-```python
-feature_get_stats()           # Get completion statistics
-feature_get_next()            # Get next feature to implement
-feature_mark_passing(id)      # Mark feature as complete
-feature_get_for_regression(n) # Get features for regression testing
-```
-
-### Browser Automation MCP
-
-Uses Playwright for browser testing:
-
-```python
-navigate(url)           # Go to URL
-click(selector)         # Click element
-type(selector, text)    # Type into input
-screenshot(path)        # Capture screenshot
-```
-
-### Starting MCP Servers
-
-MCP servers start on-demand when skills invoke them. The feature tracking server requires:
-
-```bash
-cd mcp-servers/feature-tracking
-pip install -r requirements.txt
-python server.py
-```
-
----
-
 ## Templates
 
 ### Available Templates
@@ -309,10 +340,10 @@ python server.py
 | Template | Purpose |
 |----------|---------|
 | `prd.md` | Product Requirements Document |
-| `epic.md` | Epic breakdown |
-| `user-story.md` | User story with acceptance criteria |
-| `progress-notes.md` | Session handoff notes |
-| `feature-breakdown-report.md` | Feature summary |
+| `epic-minimal.md` | Epic with task list |
+| `task.md` | Task with dependencies and continuation context |
+| `task-registry.json` | Master task/epic registry |
+| `config.json` | Project configuration |
 | `adr-template.md` | Architecture Decision Record |
 
 ### Using Templates
@@ -320,14 +351,14 @@ python server.py
 Templates are in `templates/` directory. Reference them when creating documents:
 
 ```
-Create a PRD using templates/prd.md as the format
+Create an epic using templates/epic-minimal.md as the format
 ```
 
 ---
 
 ## PDF Processing
 
-The `/pdf` skill handles PDF manipulation tasks. It serves as both an invocable command and reference documentation.
+The `/pdf` skill handles PDF manipulation tasks.
 
 ### PDF Commands
 
@@ -339,31 +370,40 @@ The `/pdf` skill handles PDF manipulation tasks. It serves as both an invocable 
 | `/pdf fill <form>` | Fill a PDF form |
 | `/pdf create` | Create a new PDF |
 | `/pdf ocr <file>` | OCR a scanned PDF |
-| `/pdf info <file>` | Show PDF metadata |
 
 ### PDF Documentation
 
-| Document | Purpose |
-|----------|---------|
-| `skills/pdf/SKILL.md` | Main workflow and quick examples |
-| `skills/pdf/FORMS.md` | Form filling (pypdf, PyPDFForm, pdf-lib) |
-| `skills/pdf/REFERENCE.md` | Advanced features, JS libraries |
-| `skills/pdf/TOOLS.md` | Tool selection guide |
-| `skills/pdf/OCR.md` | Scanned PDF handling |
-
-### Recommended Tools
-
-| Task | Python | JavaScript | CLI |
-|------|--------|------------|-----|
-| Extract text | pdfplumber | - | pdftotext |
-| Merge/split | pypdf | pdf-lib | qpdf |
-| Create PDF | reportlab | PDFKit | - |
-| Fill forms | pypdf | pdf-lib | - |
-| OCR | pytesseract | - | tesseract |
+See `skills/pdf/` for detailed guides:
+- `SKILL.md` - Main workflow
+- `FORMS.md` - Form filling
+- `REFERENCE.md` - Advanced features
+- `TOOLS.md` - Tool selection guide
+- `OCR.md` - Scanned PDF handling
 
 ---
 
-## Checkpoint Protocol
+## Autonomous Mode (--autonomous)
+
+### Implementing Features
+
+Use `/implement-features` to implement the feature database:
+
+```
+/implement-features              # Standard mode (full testing)
+/implement-features --mode=yolo  # Fast mode (lint only)
+/implement-features --mode=hybrid # Critical features tested only
+/implement-features --resume     # Resume from last session
+```
+
+### Testing Modes
+
+| Mode | Testing | Speed | Use Case |
+|------|---------|-------|----------|
+| Standard | Full browser automation | ~5-10 min/feature | Production |
+| YOLO | Lint + type-check only | ~1-2 min/feature | Prototyping |
+| Hybrid | Critical features only | ~3-5 min/feature | Internal tools |
+
+### Checkpoint Protocol
 
 During implementation, checkpoints occur every 10 features:
 
@@ -381,46 +421,14 @@ Always respect checkpoints - they're for human oversight.
 
 ---
 
-## Git Commit Standards
-
-### Commit Message Format
-
-```
-feat(<scope>): <description>
-
-<bullet points>
-
-Feature-ID: <id>
-Testing: <mode> - <verification>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-```
-
-### Scope by Category
-
-| Category | Commit Scope |
-|----------|--------------|
-| A | auth, security |
-| B | nav, routing |
-| C | data, crud |
-| D | workflow |
-| E | forms |
-| F | display, ui |
-| G | search |
-| P | payment, billing |
-
----
-
 ## Error Handling
 
-### Implementation Failure
+### Task Implementation Failure
 
-If a feature fails after 3 attempts:
-1. Skip the feature (`feature_skip(id)`)
-2. Log the blocker in progress notes
-3. Continue with next feature
+If a task fails after 3 attempts:
+1. Set status to `continuation`
+2. Document blocker in task file
+3. Move to next ready task
 
 ### Regression Failure
 
@@ -433,9 +441,10 @@ If regression tests fail:
 ### Session Crash
 
 On unexpected termination:
-1. Check for uncommitted changes
-2. Clear stale in_progress locks
-3. Resume with `/implement-features --resume`
+1. Check for uncommitted changes (`git status`)
+2. Check for stale locks (`/reflect status --locked`)
+3. Unlock if needed (`/reflect unlock T002`)
+4. Resume (`/reflect resume`)
 
 ---
 
@@ -443,19 +452,19 @@ On unexpected termination:
 
 ### Do
 
-- Complete features atomically (one at a time)
-- Commit after each feature
+- Complete tasks atomically (one at a time)
+- Commit after each task
 - Run regression tests
-- Update progress notes at session end
+- Update continuation context if stopping mid-task
 - Respect checkpoint pauses
 
 ### Don't
 
 - Skip regression testing
-- Leave features in_progress at session end
+- Leave tasks `in_progress` at session end without continuation context
 - Force through blockers
 - Ignore test failures
-- Batch multiple feature commits
+- Work on tasks with unmet dependencies
 
 ---
 
@@ -477,6 +486,7 @@ For detailed documentation, see:
 ## Getting Help
 
 - `/help` - Show available commands
+- `/reflect status` - See current task status
 
 ---
 

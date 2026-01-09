@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Claude Forge project configuration",
+  "project": {
+    "name": "[PROJECT_NAME]",
+    "description": "[PROJECT_DESCRIPTION]",
+    "version": "0.1.0",
+    "createdAt": "[TIMESTAMP]"
+  },
+  "taskManagement": {
+    "lockTimeout": {
+      "default": 3600,
+      "unit": "seconds",
+      "description": "Time before stale locks expire and become 'continuation'"
+    },
+    "allowManualUnlock": true,
+    "maxParallelAgents": 3,
+    "autoAssignNextTask": true,
+    "requireDependencyCheck": true
+  },
+  "sessionManagement": {
+    "maxContextTokens": 200000,
+    "targetResumeTokens": 8000,
+    "warningThreshold": 150000,
+    "autoSaveInterval": 300
+  },
+  "testing": {
+    "mode": "standard",
+    "modes": {
+      "standard": {
+        "description": "Full browser automation testing",
+        "runLint": true,
+        "runTypeCheck": true,
+        "runUnitTests": true,
+        "runE2ETests": true
+      },
+      "yolo": {
+        "description": "Fast mode - lint and type-check only",
+        "runLint": true,
+        "runTypeCheck": true,
+        "runUnitTests": false,
+        "runE2ETests": false
+      },
+      "hybrid": {
+        "description": "Critical features get full tests",
+        "runLint": true,
+        "runTypeCheck": true,
+        "runUnitTests": true,
+        "runE2ETests": "critical-only",
+        "criticalCategories": ["A", "P", "C"]
+      }
+    }
+  },
+  "categories": {
+    "A": "Security & Auth",
+    "B": "Navigation",
+    "C": "Data (CRUD)",
+    "D": "Workflow",
+    "E": "Forms",
+    "F": "Display",
+    "G": "Search",
+    "H": "Notifications",
+    "I": "Settings",
+    "J": "Integration",
+    "K": "Analytics",
+    "L": "Admin",
+    "M": "Performance",
+    "N": "Accessibility",
+    "O": "Error Handling",
+    "P": "Payment",
+    "Q": "Communication",
+    "R": "Media",
+    "S": "Documentation",
+    "T": "UI Polish"
+  }
+}

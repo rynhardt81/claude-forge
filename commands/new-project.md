@@ -395,19 +395,62 @@ Review architecture decisions and continue to Feature Planning?
 
 ---
 
-## Phase 3: Feature Planning (ALL except --minimal)
+## Phase 3: Task Planning (ALL except --minimal)
 
 ### 3.1 Invoke @scrum-master
 
 Use Task tool to invoke scrum-master agent.
 
 - Break PRD into epics (major feature areas)
-- Break epics into user stories
-- Break stories into features with acceptance criteria
+- Break epics into atomic tasks (completable in one session)
+- Define dependencies between tasks and epics
+- Ensure no circular dependencies
 
-### 3.2 Map to Categories
+**Key Principle:** Each task must be completable in a single session to avoid context window exhaustion.
 
-Map each feature to one of 20 categories (see `.claude/skills/new-project/FEATURE-CATEGORIES.md`):
+### 3.2 Create Epic/Task Structure
+
+#### 3.2.1 Initialize Task Registry
+
+Create `docs/tasks/registry.json` using template `templates/task-registry.json`.
+
+#### 3.2.2 Create Project Config
+
+Create `docs/tasks/config.json` using template `templates/config.json`.
+
+#### 3.2.3 Create Epic Files
+
+For each epic, create a file structure:
+
+```
+docs/epics/
+├── E01-authentication/
+│   ├── E01-authentication.md      # Epic file
+│   └── tasks/
+│       ├── T001-setup-auth.md     # Task files
+│       ├── T002-login-form.md
+│       └── T003-session-mgmt.md
+├── E02-dashboard/
+│   ├── E02-dashboard.md
+│   └── tasks/
+│       ├── T004-layout.md
+│       └── T005-charts.md
+```
+
+Use templates:
+- `templates/epic-minimal.md` for epic files
+- `templates/task.md` for task files
+
+#### 3.2.4 Define Dependencies
+
+- **Epic-Level:** E02 depends on E01 completing
+- **Task-Level:** T002 depends on T001
+- **Cross-Epic:** T010 may depend on T003 from another epic
+- **Validate:** No circular dependencies (A → B → C → A is invalid)
+
+### 3.3 Map to Categories
+
+Map each task to one of 20 categories (see `.claude/skills/new-project/FEATURE-CATEGORIES.md`):
 - A: Security & Auth
 - B: Navigation
 - C: Data (CRUD)
@@ -429,55 +472,71 @@ Map each feature to one of 20 categories (see `.claude/skills/new-project/FEATUR
 - S: Documentation
 - T: UI Polish
 
-### 3.3 Output (varies by mode)
+### 3.4 Calculate Ready Tasks
+
+After defining dependencies, mark tasks as "ready" if all dependencies are completed.
+
+### 3.5 Output (varies by mode)
 
 **Standard Mode (no --autonomous):**
-- Create `docs/feature-breakdown.md` with full feature list
-- Features tracked manually via markdown checkboxes
-- Use with `/new-feature` skill for implementation
+- Create epic/task file structure in `docs/epics/`
+- Create `docs/tasks/registry.json` for tracking
+- Use with `/reflect resume T001` for implementation
 
 **Autonomous Mode (--autonomous):**
-- Create `features.db` with all features
-- Each feature marked `passes: false`
+- Same epic/task structure
+- Also create `features.db` for MCP server compatibility
 - Ready for `/implement-features` automation
 
-### 3.4 Update Progress Notes
+### 3.6 Update Progress Notes
 
 Append to `.claude/memories/progress-notes.md`:
-- Phase 3 completion with feature summary
-- Number of epics, stories, and features
+- Phase 3 completion with task summary
+- Number of epics and tasks created
+- Number of ready tasks (no dependencies)
 - Project status (initialization complete)
 - What's ready for (manual dev or autonomous)
 
-### 3.5 Update Latest Session
+### 3.7 Update Latest Session
 
 Update `.claude/memories/sessions/latest.md` with:
 - Current date/time
 - What was accomplished (Phases 0-3)
-- Current project state
+- Task summary (total epics, tasks, ready count)
 - Key documents created
 - Next steps
 
 This ensures `/reflect resume` can pick up where initialization left off.
 
-### 3.6 Checkpoint
+### 3.8 Checkpoint
 
 ```
-## Phase 3 Complete: Features Planned
+## Phase 3 Complete: Tasks Planned
 
-📋 Feature breakdown complete:
-- [X] epics identified
-- [Y] user stories
-- [Z] individual features
+📋 Task breakdown complete:
+- [X] epics created
+- [Y] total tasks
+- [Z] tasks ready to start
 - Mapped to [N] categories
 
-**Feature tracking:** [manual via markdown | automated via database]
+**Task structure:**
+- docs/epics/ - Epic and task files
+- docs/tasks/registry.json - Master registry
+
+**Dependencies validated:** No circular dependencies found
+
 ✅ Progress notes updated
 ✅ Session state saved
 
 [If not autonomous]:
 Project ready for development!
-Use /new-feature to implement features one at a time.
+
+**Quick Start:**
+- /reflect status         # See all tasks
+- /reflect status --ready # See available tasks
+- /reflect resume T001    # Start first task
+
+Multiple agents can work on independent tasks in parallel.
 
 [If autonomous]:
 Continue to Implementation Readiness?

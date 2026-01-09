@@ -369,50 +369,150 @@ Review architecture decisions and continue to Feature Planning?
 
 ---
 
-## Phase 3: Feature Planning (ALL MODES)
+## Phase 3: Task Planning (ALL MODES)
 
-This phase breaks down the PRD into implementable features.
+This phase breaks down the PRD into epics and atomic tasks with dependencies.
 
 ### 3.1 Invoke @scrum-master
 
 - Break PRD into epics (major feature areas)
-- Break epics into user stories
-- Break stories into features with acceptance criteria
+- Break epics into atomic tasks (completable in one session)
+- Define dependencies between tasks and epics
+- Ensure no circular dependencies
 
-### 3.2 Map to Categories
+**Key Principle: Atomic Tasks**
 
-Map each feature to one of 20 categories (see `FEATURE-CATEGORIES.md`):
+Each task must be completable in a single session to avoid context window exhaustion. If a task seems too large, break it into smaller tasks with dependencies.
+
+### 3.2 Create Epic/Task Structure
+
+#### 3.2.1 Initialize Task Registry
+
+Create `docs/tasks/registry.json` using template `templates/task-registry.json`:
+
+```json
+{
+  "project": "[PROJECT_NAME]",
+  "version": "1.0.0",
+  "lastUpdated": "[TIMESTAMP]",
+  "settings": {
+    "lockTimeoutSeconds": 3600,
+    "allowManualUnlock": true,
+    "maxParallelAgents": 3,
+    "autoAssignNext": true
+  },
+  "stats": {
+    "epics": { "total": 0, "completed": 0, "in_progress": 0, "blocked": 0 },
+    "tasks": { "total": 0, "completed": 0, "in_progress": 0, "continuation": 0, "ready": 0, "pending": 0 }
+  },
+  "epics": [],
+  "tasks": []
+}
+```
+
+#### 3.2.2 Create Project Config
+
+Create `docs/tasks/config.json` using template `templates/config.json`:
+- Configure task management settings
+- Set testing mode preferences
+- Define category mappings
+
+#### 3.2.3 Create Epic Files
+
+For each epic, create a file structure:
+
+```
+docs/epics/
+├── E01-authentication/
+│   ├── E01-authentication.md      # Epic file
+│   └── tasks/
+│       ├── T001-setup-auth.md     # Task files
+│       ├── T002-login-form.md
+│       └── T003-session-mgmt.md
+├── E02-dashboard/
+│   ├── E02-dashboard.md
+│   └── tasks/
+│       ├── T004-layout.md
+│       └── T005-charts.md
+```
+
+Use templates:
+- `templates/epic-minimal.md` for epic files
+- `templates/task.md` for task files
+
+#### 3.2.4 Define Dependencies
+
+**Epic-Level Dependencies:**
+- E02 (Dashboard) depends on E01 (Authentication) completing
+- Epic can't start until all dependencies complete
+
+**Task-Level Dependencies:**
+- T002 (Login Form) depends on T001 (Auth Setup)
+- T003 (Session Mgmt) depends on T001 and T002
+- Tasks within an epic often form a chain
+
+**Cross-Epic Dependencies:**
+- T010 (Dashboard Charts) may depend on T003 (Session Mgmt) from E01
+- Tracked in task's `dependencies` array
+
+**Validate No Circular Dependencies:**
+- A → B → C → A is invalid
+- Check during planning, reject if found
+
+### 3.3 Map to Categories
+
+Map each task to one of 20 categories (see `FEATURE-CATEGORIES.md`):
 - A: Security & Auth
 - B: Navigation
 - C: Data (CRUD)
 - ... through T: UI Polish
 
-### 3.3 Output (varies by mode)
+Categories help with:
+- Priority ordering (Security first)
+- Testing mode decisions (critical categories get full tests)
+- Parallel work assignment
+
+### 3.4 Calculate Ready Tasks
+
+After defining all dependencies, calculate which tasks are "ready":
+
+```
+For each task:
+  If all dependencies are "completed":
+    Set status to "ready"
+  Else:
+    Set status to "pending"
+```
+
+Update registry stats with counts.
+
+### 3.5 Output (varies by mode)
 
 **Standard Mode (no --autonomous):**
-- Create `docs/feature-breakdown.md` with full feature list
-- Features tracked manually via markdown checkboxes
-- Use with `/new-feature` skill for implementation
+- Create epic/task file structure in `docs/epics/`
+- Create `docs/tasks/registry.json` for tracking
+- Use with `/reflect resume T001` for implementation
+- Agents work on tasks via `/reflect resume`
 
 **Autonomous Mode (--autonomous):**
-- Create `features.db` with all features
-- Each feature marked `passes: false`
+- Same epic/task structure
+- Also create `features.db` for MCP server compatibility
 - Ready for `/implement-features` automation
 
-### 3.4 Update Progress Notes
+### 3.6 Update Progress Notes
 
 Append to `.claude/memories/progress-notes.md`:
 
 ```markdown
 ## Phase 3 Complete: [current date/time]
 
-- [x] Phase 3: Feature Planning
-  - @scrum-master broke PRD into features
+- [x] Phase 3: Task Planning
+  - @scrum-master created epic/task structure
   - [X] epics identified
-  - [Y] user stories created
-  - [Z] individual features mapped
-  - Features mapped to [N] categories
-  - Output: [docs/feature-breakdown.md | features.db]
+  - [Y] total tasks created
+  - [Z] tasks ready to start (no dependencies)
+  - Tasks mapped to [N] categories
+  - Output: docs/epics/, docs/tasks/registry.json
 
 ## Project Status
 
@@ -420,20 +520,30 @@ Append to `.claude/memories/progress-notes.md`:
 
 - PRD: docs/prd.md
 - ADRs: .claude/reference/06-architecture-decisions.md
-- Features: [docs/feature-breakdown.md | features.db]
+- Task Registry: docs/tasks/registry.json
+- Epics: docs/epics/
+
+## Epic Overview
+
+| ID | Name | Tasks | Ready | Status |
+|----|------|-------|-------|--------|
+| E01 | [Name] | X | Y | pending |
+| E02 | [Name] | X | 0 | pending (depends: E01) |
+| ... |
 
 ## Ready For
 
 [If not autonomous]:
-- Manual development using /new-feature, /fix-bug, etc.
-- Use /reflect resume to continue in future sessions
+- Manual development using /reflect resume T001
+- Multiple agents can work on independent ready tasks
+- Use /reflect status to see available work
 
 [If autonomous]:
 - Phase 4: Implementation Readiness
 - Phase 5: Kickoff with /implement-features
 ```
 
-### 3.5 Update Latest Session
+### 3.7 Update Latest Session
 
 Also update `.claude/memories/sessions/latest.md` with current state:
 
@@ -441,48 +551,73 @@ Also update `.claude/memories/sessions/latest.md` with current state:
 # Latest Session
 
 **Date:** [current date/time]
-**Phase Completed:** Phase 3 - Feature Planning
+**Phase Completed:** Phase 3 - Task Planning
 
 ## What Was Done
 
 - Initialized Claude Forge framework
 - Created PRD with [X] user stories
 - Documented [Y] architecture decisions
-- Broke down into [Z] implementable features
+- Broke down into [Z] atomic tasks across [N] epics
 
 ## Current State
 
 Project initialization complete. Ready for [manual development | autonomous implementation].
 
+## Task Summary
+
+- **Total Epics:** [X]
+- **Total Tasks:** [Y]
+- **Ready Tasks:** [Z] (can start immediately)
+- **Blocked Tasks:** [W] (waiting on dependencies)
+
 ## Key Documents
 
 - PRD: docs/prd.md
 - ADRs: .claude/reference/06-architecture-decisions.md
-- Features: [docs/feature-breakdown.md | features.db]
+- Task Registry: docs/tasks/registry.json
+- Epic Files: docs/epics/
 
 ## Next Steps
 
-[If manual]: Use /new-feature to start implementing features
-[If autonomous]: Continue to Phase 4-5 for MCP setup and kickoff
+[If manual]:
+- Run /reflect status to see available tasks
+- Run /reflect resume T001 to start first task
+- Multiple agents can work on independent tasks in parallel
+
+[If autonomous]:
+- Continue to Phase 4-5 for MCP setup and kickoff
 ```
 
-### 3.6 Checkpoint
+### 3.8 Checkpoint
 
 ```
-## Phase 3 Complete: Features Planned
+## Phase 3 Complete: Tasks Planned
 
-📋 Feature breakdown complete:
-- [X] epics identified
-- [Y] user stories
-- [Z] individual features
+📋 Task breakdown complete:
+- [X] epics created
+- [Y] total tasks
+- [Z] tasks ready to start
 - Mapped to [N] categories
 
-**Feature tracking:** [manual via markdown | automated via database]
+**Task structure:**
+- docs/epics/ - Epic and task files
+- docs/tasks/registry.json - Master registry
+
+**Dependencies validated:** No circular dependencies found
+
 ✅ Progress notes updated
 ✅ Session state saved
 
-[If not autonomous]: Project ready for development!
-Use /new-feature to implement features one at a time.
+[If not autonomous]:
+Project ready for development!
+
+**Quick Start:**
+- /reflect status         # See all tasks
+- /reflect status --ready # See available tasks
+- /reflect resume T001    # Start first task
+
+Multiple agents can work on independent tasks in parallel.
 
 [If autonomous]: Continue to Implementation Readiness?
 ```

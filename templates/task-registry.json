@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Task registry schema for Claude Forge framework",
+  "project": "[PROJECT_NAME]",
+  "version": "1.0.0",
+  "lastUpdated": "[TIMESTAMP]",
+  "settings": {
+    "lockTimeoutSeconds": 3600,
+    "allowManualUnlock": true,
+    "maxParallelAgents": 3,
+    "autoAssignNext": true
+  },
+  "stats": {
+    "epics": {
+      "total": 0,
+      "completed": 0,
+      "in_progress": 0,
+      "blocked": 0
+    },
+    "tasks": {
+      "total": 0,
+      "completed": 0,
+      "in_progress": 0,
+      "continuation": 0,
+      "ready": 0,
+      "pending": 0
+    }
+  },
+  "epics": [
+    {
+      "id": "E01",
+      "name": "[Epic Name]",
+      "description": "[Brief description]",
+      "category": "A",
+      "status": "pending",
+      "dependencies": [],
+      "priority": 1,
+      "tasks": ["T001", "T002"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T001",
+      "epic": "E01",
+      "name": "[Task Name]",
+      "category": "A",
+      "priority": 1,
+      "status": "pending",
+      "dependencies": [],
+      "estimatedSize": "small",
+      "file": "docs/epics/E01-epic-name/tasks/T001-task-name.md",
+      "lock": null
+    }
+  ]
+}

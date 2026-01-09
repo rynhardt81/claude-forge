@@ -1,6 +1,6 @@
 # Claude Forge
 
-A comprehensive framework for AI-assisted software development with Claude Code. Provides structured workflows, specialized agents, and reusable skills for autonomous development with human oversight.
+A comprehensive framework for AI-assisted software development with Claude Code. Provides structured workflows, specialized agents, task management with dependencies, and reusable skills for autonomous development with human oversight.
 
 ---
 
@@ -10,21 +10,19 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 - [Quick Start](#quick-start)
   - [New Project](#new-project)
   - [Existing Project](#existing-project)
+  - [Autonomous Development](#autonomous-development)
+- [Task Management](#task-management)
+  - [Epic/Task Structure](#epictask-structure)
+  - [Task States](#task-states)
+  - [Dependencies](#dependencies)
+  - [Parallel Work](#parallel-work)
+- [Commands Reference](#commands-reference)
+  - [Project Commands](#project-commands)
+  - [Reflect Commands](#reflect-commands)
+  - [PDF Commands](#pdf-commands)
 - [Setup Guide](#setup-guide)
-  - [Step 1: Copy Framework](#step-1-copy-framework)
-  - [Step 2: Create CLAUDE.md](#step-2-create-claudemd)
-  - [Step 3: Configure Reference Docs](#step-3-configure-reference-docs)
-  - [Step 4: Initialize Memories](#step-4-initialize-memories)
 - [Directory Structure](#directory-structure)
 - [Framework Components](#framework-components)
-  - [Skills](#skills)
-  - [Agents](#agents)
-  - [Templates](#templates)
-  - [Reference Documentation](#reference-documentation)
-- [Usage](#usage)
-  - [Starting a Session](#starting-a-session)
-  - [Common Commands](#common-commands)
-  - [Autonomous Development](#autonomous-development)
 - [Customization](#customization)
 - [Troubleshooting](#troubleshooting)
 
@@ -34,20 +32,19 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 
 **Claude Forge** enables structured, safe, autonomous development by providing:
 
+- **Task Management** - Epic/task tracking with dependencies for parallel work
 - **Agent Personas** - Specialized agents for different roles (developer, architect, PM, etc.)
 - **Skills** - Reusable workflows for common tasks (features, bugs, refactoring, PRs)
-- **Templates** - Standardized document formats (PRD, ADR, user stories)
+- **Templates** - Standardized document formats (PRD, ADR, epics, tasks)
 - **Security Model** - Safe autonomous operation with command allowlists
-- **Session Continuity** - Context preservation across multiple sessions
+- **Session Continuity** - Context preservation and minimal-context resume
 - **Autonomous Development** - Full project implementation from idea to code
 
 ---
 
 ## Quick Start
 
-### Option A: Standard Development (Recommended for most users)
-
-Use this for human-directed development with AI assistance:
+### Option A: New Project (Recommended)
 
 ```bash
 # 1. Create your project directory
@@ -64,53 +61,27 @@ rm -rf .claude/.git
 /new-project
 ```
 
-The `/new-project` command will interactively ask you for:
-- **Project name** - What to call your project
-- **Description** - What the project does
-- **Tech stack** - Choose from common stacks or specify custom
+The `/new-project` command runs a **continuous workflow**:
+
+| Phase | What Happens | Output |
+|-------|--------------|--------|
+| 0 | Framework setup | `.claude/` structure, CLAUDE.md, memories |
+| 1 | Requirements discovery | `docs/prd.md` |
+| 2 | Architecture & standards | ADRs, populated reference docs |
+| 3 | Task planning | `docs/epics/`, `docs/tasks/registry.json` |
 
 Or provide details inline:
 ```bash
 /new-project "My awesome e-commerce app using Next.js"
 ```
 
-This sets up:
-- `.claude/CLAUDE.md` - Customized project instructions
-- `.claude/memories/` - Session continuity
-- `.claude/reference/` - Architecture documentation
-
-### Option B: Autonomous Development
-
-Use this for full autonomous implementation from idea to code:
-
+After initialization, start working:
 ```bash
-# 1. Create your project directory
-mkdir my-new-project
-cd my-new-project
-
-# 2. Clone Claude Forge into .claude directory
-git clone https://github.com/rynhardt81/claude-forge.git .claude
-
-# 3. Remove the .git from .claude
-rm -rf .claude/.git
-
-# 4. Initialize with autonomous mode
-/new-project --autonomous
+/reflect status --ready   # See available tasks
+/reflect resume T001      # Start first task
 ```
 
-You'll be prompted for project details, then the 5-phase workflow begins:
-1. **Requirements Discovery** - PRD creation with @analyst and @project-manager
-2. **Feature Breakdown** - 50-400+ features with @scrum-master
-3. **Technical Planning** - ADRs with @architect
-4. **Implementation Readiness** - MCP setup and security
-5. **Kickoff** → `/implement-features`
-
-Or provide the idea inline:
-```bash
-/new-project "E-commerce platform for handmade crafts" --autonomous
-```
-
-### Option C: Existing Project
+### Option B: Existing Project
 
 Add Claude Forge to an existing codebase:
 
@@ -124,22 +95,181 @@ git clone https://github.com/rynhardt81/claude-forge.git .claude
 # 3. Remove the .git from .claude
 rm -rf .claude/.git
 
-# 4. Initialize the framework with --current flag
+# 4. Initialize with --current flag
 /new-project --current
 ```
 
-The `--current` flag tells Claude to analyze your existing codebase:
+The `--current` flag analyzes your existing codebase:
 - **Discovers** your tech stack from package.json, requirements.txt, etc.
 - **Identifies** project structure, existing commands, and patterns
 - **Presents findings** for your confirmation before proceeding
-- **Customizes** CLAUDE.md with your project's actual details
+- **Creates** PRD, architecture docs, and task breakdown based on existing code
 
-You can also combine with autonomous mode:
+### Option C: Autonomous Development
+
+For full autonomous implementation from idea to code:
+
+```bash
+/new-project "E-commerce platform for handmade crafts" --autonomous
+```
+
+This runs Phases 0-5:
+- Phases 0-3: Same as standard (PRD, ADRs, tasks)
+- Phase 4: MCP server setup, security model
+- Phase 5: Kickoff with `/implement-features`
+
+Combine with existing project:
 ```bash
 /new-project --current --autonomous
 ```
 
-This analyzes your existing project, then creates a full PRD and feature database for continued development.
+### Option D: Minimal Setup
+
+Framework setup only (skip documentation):
+
+```bash
+/new-project --minimal
+```
+
+---
+
+## Task Management
+
+### Epic/Task Structure
+
+Projects are organized into **epics** (major feature areas) containing **atomic tasks**:
+
+```
+docs/
+├── tasks/
+│   ├── registry.json          # Master task/epic registry
+│   └── config.json            # Project configuration
+└── epics/
+    ├── E01-authentication/
+    │   ├── E01-authentication.md   # Epic file
+    │   └── tasks/
+    │       ├── T001-setup-auth.md  # Task files
+    │       ├── T002-login-form.md
+    │       └── T003-session-mgmt.md
+    └── E02-dashboard/
+        └── ...
+```
+
+### Task States
+
+| Status | Description | When |
+|--------|-------------|------|
+| `pending` | Dependencies not met | Task waiting for other tasks |
+| `ready` | Can be started | All dependencies complete |
+| `in_progress` | Being worked on | Agent has acquired lock |
+| `continuation` | Partially complete | Session ended mid-task |
+| `completed` | Done | Task finished and verified |
+
+### State Flow
+
+```
+pending → ready → in_progress → completed
+                       ↓
+                  continuation
+                       ↓
+                  in_progress → completed
+```
+
+### Dependencies
+
+**Task-Level:** T002 depends on T001
+```json
+{
+  "id": "T002",
+  "dependencies": ["T001"]
+}
+```
+
+**Epic-Level:** E02 depends on E01
+```json
+{
+  "id": "E02",
+  "dependencies": ["E01"]
+}
+```
+
+**Cross-Epic:** T010 (E02) depends on T003 (E01)
+```json
+{
+  "id": "T010",
+  "epic": "E02",
+  "dependencies": ["T003"]
+}
+```
+
+### Parallel Work
+
+Multiple agents can work on independent tasks simultaneously:
+
+```
+Terminal 1: /reflect resume T001  # Authentication setup
+Terminal 2: /reflect resume T010  # Dashboard layout (no deps on T001)
+Terminal 3: /reflect resume T020  # API integration (no deps on T001, T010)
+```
+
+The registry tracks locks to prevent conflicts. Default max: 3 parallel agents.
+
+### Lock Management
+
+Tasks are locked when an agent starts work:
+
+```bash
+/reflect status --locked   # See all locked tasks
+/reflect unlock T002       # Force unlock stale task
+```
+
+**Lock timeout:** 1 hour (configurable)
+
+---
+
+## Commands Reference
+
+### Project Commands
+
+| Command | Description |
+|---------|-------------|
+| `/new-project` | Full workflow: PRD + ADRs + tasks |
+| `/new-project "description"` | With inline description |
+| `/new-project --current` | Analyze existing codebase first |
+| `/new-project --autonomous` | Add feature database for automation |
+| `/new-project --minimal` | Framework setup only |
+| `/implement-features` | Implement features (autonomous mode) |
+| `/implement-features --mode=yolo` | Fast mode (lint only) |
+| `/implement-features --resume` | Resume from last session |
+
+### Reflect Commands
+
+| Command | Description |
+|---------|-------------|
+| `/reflect` | Capture session learnings |
+| `/reflect resume` | Resume with full context |
+| `/reflect resume E01` | Resume specific epic |
+| `/reflect resume T002` | Resume specific task |
+| `/reflect status` | Show task/epic overview |
+| `/reflect status --ready` | Show available tasks |
+| `/reflect status --locked` | Show locked tasks |
+| `/reflect unlock T002` | Force unlock stale task |
+| `/reflect config` | Show configuration |
+| `/reflect config lockTimeout 1800` | Update setting |
+| `/reflect on` | Enable auto-reflection |
+| `/reflect off` | Disable auto-reflection |
+
+### PDF Commands
+
+| Command | Description |
+|---------|-------------|
+| `/pdf extract <file>` | Extract text or tables |
+| `/pdf merge <files>` | Merge multiple PDFs |
+| `/pdf split <file>` | Split into pages |
+| `/pdf fill <form>` | Fill PDF form |
+| `/pdf create` | Create new PDF |
+| `/pdf ocr <file>` | OCR scanned PDF |
+| `/pdf info <file>` | Show PDF metadata |
 
 ---
 
@@ -147,7 +277,7 @@ This analyzes your existing project, then creates a full PRD and feature databas
 
 ### Step 1: Copy Framework
 
-After cloning, your project structure should look like:
+After cloning, your project structure:
 
 ```
 your-project/
@@ -157,141 +287,58 @@ your-project/
 │   ├── skills/                 # Workflow skills
 │   ├── templates/              # Document templates
 │   ├── reference/              # Architecture doc templates
-│   ├── sub-agents/             # Specialist agents
 │   ├── security/               # Security model
 │   ├── mcp-servers/            # MCP server implementations
 │   ├── memories/               # Session continuity
 │   └── ...
+├── docs/                       # Project documentation
+│   ├── prd.md                  # Product requirements
+│   ├── tasks/                  # Task registry
+│   └── epics/                  # Epic and task files
 ├── src/                        # Your source code
 └── ...
 ```
 
-### Step 2: Create CLAUDE.md
+### Step 2: Initialize with /new-project
 
-The `.claude/CLAUDE.md` file tells Claude how to work with your codebase. It's created automatically by `/new-project`, or you can create it manually.
+The recommended approach is to use `/new-project`:
 
-**Option A: Use the template**
+```bash
+/new-project "My project description"
+```
+
+This automatically:
+1. Creates `.claude/CLAUDE.md` with your project details
+2. Initializes memory structure
+3. Copies reference templates
+4. Creates PRD through requirements discovery
+5. Creates ADRs through architecture planning
+6. Creates epic/task structure for development
+
+### Step 3: Manual Setup (Alternative)
+
+If you prefer manual setup:
+
+**Create CLAUDE.md:**
 ```bash
 cp .claude/templates/CLAUDE.template.md .claude/CLAUDE.md
+# Then edit .claude/CLAUDE.md with your project details
 ```
 
-**Option B: Create minimal CLAUDE.md**
-
-Create `.claude/CLAUDE.md` with at minimum:
-
-```markdown
-# CLAUDE.md
-
-This file provides guidance to Claude Code when working with this repository.
-
-## Project Overview
-
-**[Your Project Name]** is a [brief description].
-
-**Tech Stack:**
-- Backend: [e.g., Node.js, Python, Go]
-- Frontend: [e.g., React, Vue, Next.js]
-- Database: [e.g., PostgreSQL, MongoDB]
-
-## Essential Commands
-
+**Initialize memories:**
 ```bash
-# Development
-npm run dev          # Start development server
-npm test             # Run tests
-npm run build        # Build for production
+mkdir -p .claude/memories/sessions
+echo "No previous session recorded." > .claude/memories/sessions/latest.md
+echo "# General Memories" > .claude/memories/general.md
+echo "# Progress Notes" > .claude/memories/progress-notes.md
 ```
 
-## Framework Reference
-
-This project uses Claude Forge. Key resources:
-
-| Resource | Location |
-|----------|----------|
-| Skills | `.claude/skills/` |
-| Agents | `.claude/agents/` |
-| Templates | `.claude/templates/` |
-| Reference Docs | `.claude/reference/` |
-
-## Key Commands
-
-| Command | Description |
-|---------|-------------|
-| `/reflect` | Capture session state |
-| `/reflect resume` | Resume from last session |
-| `/new-feature` | Start feature development |
-| `/fix-bug` | Bug fixing workflow |
-| `/create-pr` | Create pull request |
-| `/pdf <command>` | PDF processing |
-```
-
-**Required sections in CLAUDE.md:**
-
-| Section | Purpose |
-|---------|---------|
-| Project Overview | What the project does, tech stack |
-| Essential Commands | How to run, test, build |
-| Framework Reference | Point to .claude/ resources |
-| Key Commands | Available skills/commands |
-
-### Step 3: Configure Reference Docs
-
-The `reference/` directory contains architecture documentation templates. For a new project:
-
+**Copy reference templates:**
 ```bash
 cd .claude/reference/
-
-# Rename templates (remove .template suffix)
 for f in *.template.md; do
   cp "$f" "${f%.template.md}.md"
 done
-```
-
-Then customize each document:
-
-| Document | What to Add |
-|----------|-------------|
-| `01-system-overview.md` | Project purpose, boundaries, stakeholders |
-| `02-architecture-and-tech-stack.md` | Tech choices, system design |
-| `03-security-auth-and-access.md` | Auth flows, permissions, security |
-| `04-development-standards-and-structure.md` | Code style, project structure |
-| `05-operational-and-lifecycle.md` | Deployment, monitoring, CI/CD |
-| `06-architecture-decisions.md` | ADRs for key decisions |
-| `07-non-functional-requirements.md` | Performance, scalability requirements |
-
-**Tip:** You don't need to fill everything immediately. Start with `01` and `02`, add others as needed.
-
-### Step 4: Initialize Memories
-
-Create initial memory files for session continuity:
-
-```bash
-# Ensure memories directory exists
-mkdir -p .claude/memories/sessions
-
-# Create general memories file
-cat > .claude/memories/general.md << 'EOF'
-# General Memories
-
-Project-wide learnings and preferences.
-
-## Preferences
-
-- [Add your preferences as you work]
-
-## Learnings
-
-- [Captured automatically via /reflect]
-EOF
-
-# Create latest session file
-cat > .claude/memories/sessions/latest.md << 'EOF'
-# Latest Session
-
-No previous session recorded.
-
-Use `/reflect` to capture session state.
-EOF
 ```
 
 ---
@@ -300,8 +347,9 @@ EOF
 
 ```
 .claude/
+├── CLAUDE.md                    # Project instructions
 │
-├── agents/                      # Full agent personas (15)
+├── agents/                      # Full agent personas
 │   ├── orchestrator.md          # Workflow coordination
 │   ├── analyst.md               # Requirements discovery
 │   ├── architect.md             # System design, ADRs
@@ -311,50 +359,40 @@ EOF
 │   ├── devops.md                # CI/CD, deployment
 │   ├── project-manager.md       # PRDs, scope management
 │   ├── scrum-master.md          # Sprint planning, features
-│   ├── ux-designer.md           # User flows, wireframes
+│   └── ux-designer.md           # User flows, wireframes
+│
+├── skills/                      # Workflow skills
+│   ├── reflect/                 # Session continuity & task mgmt
+│   │   ├── SKILL.md             # Main skill definition
+│   │   ├── SIGNALS.md           # Learning signals
+│   │   └── ...
+│   ├── new-project/             # Project initialization
+│   │   ├── SKILL.md             # Phase workflow
+│   │   ├── PHASES.md            # Detailed phase instructions
+│   │   └── FEATURE-CATEGORIES.md # 20 categories
+│   ├── implement-features/      # Autonomous implementation
+│   ├── pdf/                     # PDF processing
 │   └── ...
 │
-├── sub-agents/                  # Focused specialists (7)
-│   ├── codebase-analyzer.md     # Project structure analysis
-│   ├── pattern-detector.md      # Code conventions
-│   ├── requirements-analyst.md  # Requirements extraction
-│   ├── tech-debt-auditor.md     # Debt assessment
-│   ├── api-documenter.md        # API documentation
-│   ├── test-coverage-analyzer.md # Test gap analysis
-│   └── document-reviewer.md     # Doc quality review
-│
-├── skills/                      # Workflow skills (9)
-│   ├── reflect/                 # Session continuity
-│   ├── new-feature/             # Feature development
-│   ├── fix-bug/                 # Bug fixing
-│   ├── refactor/                # Code refactoring
-│   ├── create-pr/               # Pull request creation
-│   ├── release/                 # Version releases
-│   ├── new-project/             # Project initialization
-│   ├── implement-features/      # Feature implementation loop
-│   └── pdf/                     # PDF processing
-│
 ├── templates/                   # Document templates
-│   ├── CLAUDE.template.md       # CLAUDE.md template for projects
-│   ├── prd.md                   # Product Requirements Document
-│   ├── epic.md                  # Epic breakdown
-│   ├── user-story.md            # User story format
-│   ├── adr-template.md          # Architecture Decision Record
-│   ├── feature-spec.md          # Feature specification
-│   ├── progress-notes.md        # Session handoff notes
+│   ├── CLAUDE.template.md       # CLAUDE.md template
+│   ├── prd.md                   # Product Requirements
+│   ├── epic-minimal.md          # Epic template
+│   ├── task.md                  # Task template
+│   ├── task-registry.json       # Registry template
+│   ├── config.json              # Config template
+│   ├── adr-template.md          # Architecture Decision
 │   └── ...
 │
 ├── reference/                   # Architecture doc templates
 │   ├── 00-documentation-governance.md
 │   ├── 01-system-overview.template.md
-│   ├── 02-architecture-and-tech-stack.template.md
 │   └── ...
 │
 ├── security/                    # Security model
 │   ├── README.md                # Security overview
 │   ├── allowed-commands.md      # Command allowlist
-│   ├── command-validators.md    # Special validators
-│   └── python/security.py       # Reference implementation
+│   └── command-validators.md    # Special validators
 │
 ├── mcp-servers/                 # MCP server implementations
 │   ├── feature-tracking/        # Feature database MCP
@@ -362,16 +400,26 @@ EOF
 │
 ├── memories/                    # Session continuity
 │   ├── general.md               # General preferences
+│   ├── progress-notes.md        # Session summaries
 │   └── sessions/
 │       └── latest.md            # Most recent session
 │
-├── standards/                   # Coding standards
-│   └── documentation-style.md
-│
-├── features/                    # Feature specifications
-├── commands/                    # Custom commands
-├── hooks/                       # Hook definitions
-└── docs/                        # Additional documentation
+└── commands/                    # Command definitions
+    ├── new-project.md           # /new-project definition
+    └── reflect.md               # /reflect definition
+
+docs/                            # Project documentation (created by /new-project)
+├── prd.md                       # Product Requirements Document
+├── tasks/
+│   ├── registry.json            # Master task/epic registry
+│   └── config.json              # Project configuration
+└── epics/
+    ├── E01-epic-name/
+    │   ├── E01-epic-name.md     # Epic file
+    │   └── tasks/
+    │       ├── T001-task.md     # Task files
+    │       └── ...
+    └── ...
 ```
 
 ---
@@ -380,34 +428,16 @@ EOF
 
 ### Skills
 
-Skills are structured workflows invoked with `/skill-name`.
-
 | Skill | Command | Description |
 |-------|---------|-------------|
 | Reflect | `/reflect` | Capture session state and learnings |
 | Resume | `/reflect resume` | Load previous session context |
-| New Feature | `/new-feature` | Full feature development workflow |
-| Fix Bug | `/fix-bug` | Bug diagnosis and fixing |
-| Refactor | `/refactor` | Code refactoring workflow |
-| Create PR | `/create-pr` | Pull request with checklist |
-| Release | `/release` | Version release workflow |
-| New Project | `/new-project` | Initialize project (prompts for details) |
-| New Project | `/new-project --current` | Analyze existing project, confirm findings |
-| New Project | `/new-project --autonomous` | Initialize with full autonomous workflow |
-| Implement | `/implement-features` | Incremental feature loop |
+| Status | `/reflect status` | View task/epic status |
+| New Project | `/new-project` | Initialize project |
+| Implement | `/implement-features` | Autonomous feature loop |
 | PDF | `/pdf <command>` | PDF processing tasks |
 
-**PDF Commands:**
-- `/pdf extract <file>` - Extract text or tables
-- `/pdf merge <files>` - Merge multiple PDFs
-- `/pdf split <file>` - Split into pages
-- `/pdf fill <form>` - Fill PDF form
-- `/pdf create` - Create new PDF
-- `/pdf ocr <file>` - OCR scanned PDF
-
 ### Agents
-
-Agents are specialized personas for different tasks. Invoke with `@agent-name`.
 
 | Agent | Role | When to Use |
 |-------|------|-------------|
@@ -417,121 +447,48 @@ Agents are specialized personas for different tasks. Invoke with `@agent-name`.
 | @developer | Implementation | Writing code |
 | @quality-engineer | Testing | Code review, test coverage |
 | @security-boss | Security | Auth, permissions, audits |
-| @devops | Operations | CI/CD, deployment |
 | @project-manager | Planning | PRDs, scope, priorities |
-| @scrum-master | Sprint management | Feature breakdown, tracking |
-
-**Recommended Flow:**
-```
-@analyst → @architect → @developer → @quality-engineer → @devops
-```
+| @scrum-master | Sprint management | Task breakdown, tracking |
 
 ### Templates
 
-Templates provide standardized formats for common documents.
-
-| Template | Purpose | Location |
-|----------|---------|----------|
-| CLAUDE.template.md | Project CLAUDE.md | `templates/` |
-| prd.md | Product Requirements | `templates/` |
-| epic.md | Epic breakdown | `templates/` |
-| user-story.md | User stories | `templates/` |
-| adr-template.md | Architecture decisions | `templates/` |
-| feature-spec.md | Feature specs | `templates/` |
-| progress-notes.md | Session handoff | `templates/` |
-
-**Usage:**
-```
-Create a PRD using templates/prd.md as the format
-```
-
-### Reference Documentation
-
-Reference docs define project architecture. Templates are in `reference/`.
-
-| Document | Defines |
+| Template | Purpose |
 |----------|---------|
-| 00-documentation-governance.md | Document hierarchy rules |
-| 01-system-overview.md | What/why, boundaries |
-| 02-architecture-and-tech-stack.md | How it's built |
-| 03-security-auth-and-access.md | Security model |
-| 04-development-standards-and-structure.md | Code standards |
-| 05-operational-and-lifecycle.md | Deployment, ops |
-| 06-architecture-decisions.md | ADR log |
-| 07-non-functional-requirements.md | Performance, scale |
-| 08-security-model.md | Autonomous operation security |
-| 09-autonomous-development.md | Long-running agent patterns |
+| `prd.md` | Product Requirements Document |
+| `epic-minimal.md` | Epic with task list and dependencies |
+| `task.md` | Task with continuation context |
+| `task-registry.json` | Master task/epic registry |
+| `config.json` | Project configuration |
+| `adr-template.md` | Architecture Decision Record |
 
 ---
 
-## Usage
+## Configuration
 
-### Starting a Session
+### View Configuration
 
-**First time:**
-```
-Read .claude/CLAUDE.md to understand the framework and project context.
-```
-
-**Resuming work:**
-```
-/reflect resume
+```bash
+/reflect config
 ```
 
-**Ending a session:**
-```
-/reflect
-```
+### Update Settings
 
-### Common Commands
-
-| Task | Command |
-|------|---------|
-| Start new feature | `/new-feature add user authentication` |
-| Fix a bug | `/fix-bug login fails on mobile` |
-| Refactor code | `/refactor extract payment logic` |
-| Create PR | `/create-pr` |
-| Review progress | `/reflect` |
-
-### Autonomous Development
-
-For full autonomous project development:
-
-**1. Initialize Project:**
-```
-/new-project --autonomous
+```bash
+/reflect config lockTimeout 1800        # 30 minute lock timeout
+/reflect config maxParallelAgents 5     # Allow 5 concurrent workers
+/reflect config autoAssignNextTask false
 ```
 
-Or with description:
-```
-/new-project "E-commerce platform for handmade crafts" --autonomous
-```
+### Configuration Options
 
-This creates:
-- PRD document (via @analyst and @project-manager)
-- 50-400+ features in database (via @scrum-master)
-- Architecture Decision Records (via @architect)
-- MCP server setup
-
-**2. Implement Features:**
-```
-/implement-features              # Standard mode (full testing)
-/implement-features --mode=yolo  # Fast mode (lint only)
-/implement-features --resume     # Resume from last session
-```
-
-**3. Checkpoint Protocol:**
-
-Every 10 features, you'll see:
-```
-## Checkpoint: 30/92 Features
-
-Options:
-1. Continue - Resume implementation
-2. Pause - Save and exit
-3. Adjust - Change priorities
-4. Review - Inspect features
-```
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `lockTimeout` | 3600 | Seconds before lock is stale |
+| `allowManualUnlock` | true | Allow /reflect unlock |
+| `maxParallelAgents` | 3 | Max concurrent task locks |
+| `autoAssignNextTask` | true | Auto-suggest next task |
+| `maxContextTokens` | 200000 | Total context budget |
+| `targetResumeTokens` | 8000 | Target for resume context |
 
 ---
 
@@ -543,71 +500,44 @@ Options:
 |------|--------|----------|
 | CLAUDE.md | **Required** - Add project details | `.claude/CLAUDE.md` |
 | Reference docs | **Recommended** - Fill architecture | `.claude/reference/` |
-| Memories | **Optional** - Pre-seed preferences | `.claude/memories/` |
+| Config | **Optional** - Adjust settings | `docs/tasks/config.json` |
 
 ### What NOT to Modify
 
 | Item | Reason |
 |------|--------|
-| `00-documentation-governance.md` | Universal framework rules |
-| `sub-agents/` | Generic specialists |
+| `templates/` | Framework templates |
 | `skills/` (core files) | Framework workflows |
-
-### Adding Custom Content
-
-**Custom agents:**
-```bash
-# Create project-specific agent
-cat > .claude/agents/my-custom-agent.md << 'EOF'
-# My Custom Agent
-
-## Role
-[Description]
-
-## Capabilities
-- [List capabilities]
-
-## When to Use
-[Guidance]
-EOF
-```
-
-**Custom skills:**
-```bash
-mkdir -p .claude/skills/my-skill
-# Add SKILL.md and supporting files
-```
+| `00-documentation-governance.md` | Universal rules |
 
 ---
 
 ## Troubleshooting
 
-### Claude doesn't see the framework
+### Tasks not showing as ready
 
-**Check:** Is `.claude/` in your project root?
+**Check:** Are dependencies complete?
 ```bash
-ls -la .claude/
+/reflect status
 ```
 
-**Check:** Is `CLAUDE.md` in the `.claude/` directory?
+**Fix:** Complete dependent tasks first, or check for circular dependencies.
+
+### Lock stuck on task
+
+**Check:** Is the lock stale?
 ```bash
-ls -la .claude/CLAUDE.md
+/reflect status --locked
 ```
 
-### Skills not working
-
-**Check:** Reference the skill location in your CLAUDE.md:
-```markdown
-## Framework Reference
-
-| Resource | Location |
-|----------|----------|
-| Skills | `.claude/skills/` |
+**Fix:** Force unlock:
+```bash
+/reflect unlock T002
 ```
 
 ### Session not resuming
 
-**Check:** Memories directory exists:
+**Check:** Do memory files exist?
 ```bash
 ls -la .claude/memories/sessions/
 ```
@@ -615,31 +545,31 @@ ls -la .claude/memories/sessions/
 **Fix:** Create the files:
 ```bash
 mkdir -p .claude/memories/sessions
-touch .claude/memories/sessions/latest.md
-touch .claude/memories/general.md
+echo "No previous session." > .claude/memories/sessions/latest.md
 ```
 
-### Reference docs not found
+### Claude doesn't see the framework
 
-**Check:** Did you copy templates?
+**Check:** Is `.claude/` in your project root?
 ```bash
-ls .claude/reference/*.md
+ls -la .claude/CLAUDE.md
 ```
 
-**Fix:** Copy and rename:
+### Task registry not found
+
+**Check:** Did you run `/new-project`?
 ```bash
-cd .claude/reference/
-for f in *.template.md; do
-  cp "$f" "${f%.template.md}.md"
-done
+ls docs/tasks/registry.json
 ```
+
+**Fix:** Run `/new-project` or create manually from template.
 
 ---
 
 ## Version
 
-**Framework Version:** 1.1.0
-**Last Updated:** 2025-01-09
+**Framework Version:** 1.2.0
+**Last Updated:** 2026-01-09
 
 ---
 
@@ -655,4 +585,4 @@ Contributions welcome! Please read the contributing guidelines before submitting
 
 ---
 
-*Claude Forge enables structured, safe, autonomous development with human oversight at key checkpoints.*
+*Claude Forge enables structured, safe, and optional autonomous development with human oversight at key checkpoints.*
