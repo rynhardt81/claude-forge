@@ -179,7 +179,7 @@ ALL bash commands are validated before execution using the command allowlist sys
 
 ## Reference Implementation
 
-The `python/` directory contains the reference implementation from autocoder-master:
+The `python/` directory contains the reference implementation:
 
 - `security.py` - Full Python implementation with validators
 - `example_usage.py` - How to integrate with Claude SDK

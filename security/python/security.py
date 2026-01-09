@@ -5,7 +5,7 @@ Security Hooks for Autonomous Coding Agent
 Pre-tool-use hooks that validate bash commands for security.
 Uses an allowlist approach - only explicitly permitted commands can run.
 
-This is the reference implementation from autocoder-master.
+Reference implementation for Claude Forge security model.
 Adapt for your project as needed.
 """
 
