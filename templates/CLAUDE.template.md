@@ -311,7 +311,76 @@ Detailed feature documentation lives in `.claude/features/`.
 
 ---
 
-## 11. Quick Reference
+## 11. Autonomous Development (Optional)
+
+<!-- CUSTOMIZE: Remove this section if not using autonomous development features -->
+
+### Creating a New Project
+
+Use `/new-project` to go from idea to implementation-ready:
+
+```
+/new-project "Your project idea here"
+```
+
+This triggers a 5-phase workflow:
+1. **Requirements Discovery** - @analyst and @project-manager create PRD
+2. **Feature Breakdown** - @scrum-master creates features in database
+3. **Technical Planning** - @architect creates ADRs
+4. **Implementation Readiness** - Setup MCP servers and security
+5. **Kickoff** - User approval, start implementation
+
+### Implementing Features
+
+Use `/implement-features` to implement the feature database:
+
+```
+/implement-features              # Standard mode (full testing)
+/implement-features --mode=yolo  # Fast mode (lint only)
+/implement-features --resume     # Resume from last session
+```
+
+### State Persistence
+
+State is preserved across sessions via three bridges:
+
+1. **Feature Database** - `.claude/features/features.db`
+   - Which features are complete
+   - Priority and ordering
+   - Test steps
+
+2. **Git Commits** - Source control
+   - All code changes
+   - Feature IDs in commit messages
+
+3. **Progress Notes** - `.claude/memories/progress-notes.md`
+   - Session summaries
+   - Decisions made
+   - Blockers encountered
+
+### Resuming Work
+
+After a session ends, resume with:
+
+```
+/implement-features --resume
+```
+
+Or use the reflect skill:
+
+```
+/reflect resume
+```
+
+This will:
+1. Read progress notes for context
+2. Query database for current state
+3. Review recent git commits
+4. Continue from where you left off
+
+---
+
+## 12. Quick Reference
 
 ### Common Tasks
 
