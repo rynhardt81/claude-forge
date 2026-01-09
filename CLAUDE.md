@@ -23,7 +23,8 @@ This file provides Claude Code with context about this framework and how to use 
 | Command | Description |
 |---------|-------------|
 | `/new-project "idea"` | Initialize project with framework (standard mode) |
-| `/new-project "idea" --autonomous` | Initialize with full autonomous workflow |
+| `/new-project --current` | Analyze existing project, confirm findings |
+| `/new-project --autonomous` | Full autonomous workflow (PRD, features, ADRs) |
 | `/implement-features` | Implement features from database one at a time |
 | `/implement-features --mode=yolo` | Fast mode (lint only, no browser tests) |
 | `/implement-features --resume` | Resume from last session |
@@ -76,6 +77,25 @@ This triggers a 5-phase workflow:
 3. **Technical Planning** - @architect creates ADRs
 4. **Implementation Readiness** - Setup MCP servers and security
 5. **Kickoff** - User approval, start implementation
+
+### Existing Project Mode
+
+Use `--current` to integrate with an existing codebase:
+
+```
+/new-project --current
+```
+
+This analyzes your project:
+- Detects tech stack from package.json, requirements.txt, etc.
+- Identifies project structure and existing commands
+- Presents findings for confirmation
+- Customizes CLAUDE.md with discovered details
+
+Combine flags for existing project + autonomous:
+```
+/new-project --current --autonomous
+```
 
 ### Implementing Features
 

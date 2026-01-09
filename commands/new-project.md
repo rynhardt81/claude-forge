@@ -1,7 +1,7 @@
 ---
 name: new-project
-description: Initialize a new project with Claude Forge framework (add --autonomous for full autonomous development)
-argument-hint: "project description" [--autonomous]
+description: Initialize a new project with Claude Forge framework (--current for existing projects, --autonomous for full workflow)
+argument-hint: "project description" [--current] [--autonomous]
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task, TodoWrite, AskUserQuestion
 ---
 
@@ -13,16 +13,30 @@ You are initializing a new project using the Claude Forge framework.
 
 **Raw Arguments:** $ARGUMENTS
 
-## Step 1: Parse Arguments and Gather Project Information
+## Step 1: Parse Arguments and Determine Project Type
 
 ### 1.1 Parse Flags
 
 Extract from arguments:
-- `--autonomous` flag → Autonomous Mode (full PRD, features.db, ADRs)
+- `--current` flag → **Existing Project Mode** (analyze codebase first)
+- `--autonomous` flag → **Autonomous Mode** (full PRD, features.db, ADRs)
 - `--mode=yolo|standard|hybrid` → Testing mode (autonomous only)
 - Everything else → Project description
 
-### 1.2 Gather Project Information (REQUIRED)
+### 1.2 Determine Project Type
+
+| Flags | Mode | Description |
+|-------|------|-------------|
+| (none) | New Project | Ask for project details |
+| `--current` | Existing Project | Analyze codebase, confirm findings |
+| `--autonomous` | New + Autonomous | Ask details, then full workflow |
+| `--current --autonomous` | Existing + Autonomous | Analyze, then full workflow |
+
+---
+
+## Step 2: Gather Project Information
+
+### 2A: For NEW Projects (no --current flag)
 
 **If no project description was provided (or it's empty/just flags):**
 
@@ -53,20 +67,109 @@ Parse the description to extract:
 - Brief description (use provided text)
 - Tech stack (infer from keywords like "React", "Python", "Node", etc., or ask)
 
-Store these values for use in CLAUDE.md customization:
-- `PROJECT_NAME` - The project name
-- `PROJECT_DESCRIPTION` - What the project does
-- `TECH_STACK` - Primary technologies (frontend, backend, database)
+---
 
-## Step 2: Determine Mode
+### 2B: For EXISTING Projects (--current flag)
 
-Based on parsed arguments:
-- If `--autonomous` flag present: **Autonomous Mode**
-- Otherwise: **Standard Mode** (framework setup only)
+**Analyze the existing codebase to discover project details:**
+
+#### 2B.1 Discover Project Structure
+
+Use Glob and Read tools to analyze:
+
+```
+1. Check for package.json, requirements.txt, go.mod, Cargo.toml, etc.
+2. Identify project structure (src/, app/, lib/, etc.)
+3. Look for existing README.md or documentation
+4. Check for existing tests (tests/, __tests__/, spec/)
+5. Identify frameworks from dependencies
+```
+
+#### 2B.2 Detect Tech Stack
+
+Analyze dependency files to determine:
+
+| File | Indicates |
+|------|-----------|
+| `package.json` | Node.js project - check for React, Next.js, Express, etc. |
+| `requirements.txt` / `pyproject.toml` | Python - check for FastAPI, Django, Flask |
+| `go.mod` | Go project |
+| `Cargo.toml` | Rust project |
+| `pom.xml` / `build.gradle` | Java project |
+| `*.csproj` | .NET project |
+
+#### 2B.3 Extract Project Name
+
+Look for project name in:
+1. `package.json` → `name` field
+2. `pyproject.toml` → `[project] name`
+3. Directory name as fallback
+4. Existing README.md title
+
+#### 2B.4 Present Findings for Confirmation
+
+Display discovered information to user:
+
+```markdown
+## Existing Project Analysis
+
+I've analyzed your codebase and found:
+
+**Project Name:** [discovered name]
+**Description:** [from README or inferred]
+
+**Tech Stack:**
+- **Frontend:** [React/Vue/Angular/None detected]
+- **Backend:** [Express/FastAPI/Django/None detected]
+- **Database:** [PostgreSQL/MongoDB/SQLite/None detected]
+- **Testing:** [Jest/Pytest/None detected]
+
+**Project Structure:**
+```
+[show directory tree]
+```
+
+**Key Files Found:**
+- [list important files]
+
+**Existing Commands:** (from package.json scripts or Makefile)
+- `npm run dev` - Start development
+- `npm test` - Run tests
+- ...
+```
+
+#### 2B.5 User Confirmation
+
+Use AskUserQuestion to confirm or correct:
+
+```
+Question 1: "Is this analysis correct?"
+  - Header: "Confirm"
+  - Options:
+    - "Yes, proceed with these details" - Continue with discovered info
+    - "Partially correct" - Let me make corrections
+    - "No, let me provide details manually" - Fall back to manual input
+
+Question 2 (if "Partially correct"): "What needs correction?"
+  - Header: "Corrections"
+  - Options: [Free text via "Other"]
+```
 
 ---
 
-## Phase 0: Project Setup (BOTH MODES)
+## Step 3: Store Project Information
+
+After gathering (new project) or confirming (existing project):
+
+- `PROJECT_NAME` - The project name
+- `PROJECT_DESCRIPTION` - What the project does
+- `TECH_STACK` - Primary technologies (frontend, backend, database)
+- `PROJECT_TYPE` - "new" or "existing"
+- `EXISTING_COMMANDS` - (existing only) Commands found in project
+
+---
+
+## Phase 0: Project Setup (ALL MODES)
 
 This phase runs for ALL projects. Complete these steps:
 
@@ -81,13 +184,16 @@ This phase runs for ALL projects. Complete these steps:
 ### 0.2 Initialize CLAUDE.md
 
 1. Read the template: `.claude/templates/CLAUDE.template.md`
-2. Customize the template using gathered information:
+2. Customize the template using gathered/discovered information:
    - Replace `[Project Name]` with `PROJECT_NAME`
    - Replace `[brief description of what the project does]` with `PROJECT_DESCRIPTION`
    - Update Section 3 (Project Overview) with tech stack:
-     - Backend: (from TECH_STACK or placeholder)
-     - Frontend: (from TECH_STACK or placeholder)
-     - Database: (infer or placeholder)
+     - Backend: (from TECH_STACK)
+     - Frontend: (from TECH_STACK)
+     - Database: (from TECH_STACK or infer)
+   - **For existing projects (--current):**
+     - Update Section 4 (Essential Commands) with `EXISTING_COMMANDS`
+     - Update Section 5 (Architecture Summary) with discovered structure
 3. Write customized content to: `./CLAUDE.md`
 
 ### 0.3 Initialize Memories Structure

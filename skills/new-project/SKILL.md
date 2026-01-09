@@ -2,21 +2,26 @@
 
 ## Purpose
 
-The `/new-project` skill initializes a new project with the Claude Forge framework. It supports two modes:
+The `/new-project` skill initializes a project with the Claude Forge framework. It supports multiple modes:
 
-1. **Standard Mode** - Quick framework setup for human-directed development
-2. **Autonomous Mode** - Full PRD, feature database, and ADRs for autonomous development
+1. **New Project** - Interactive setup for new projects
+2. **Existing Project** - Analyze existing codebase and integrate framework
+3. **Autonomous Mode** - Full PRD, feature database, and ADRs for autonomous development
 
 ## Invocation
 
 ```
-/new-project "project description"                    # Standard mode
-/new-project "project description" --autonomous       # Autonomous mode
-/new-project "project description" --autonomous --mode=yolo  # Fast autonomous
+/new-project                                          # New project, prompts for details
+/new-project "project description"                    # New project with description
+/new-project --current                                # Existing project, analyzes codebase
+/new-project --autonomous                             # New + autonomous workflow
+/new-project --current --autonomous                   # Existing + autonomous workflow
+/new-project --autonomous --mode=yolo                 # Fast autonomous mode
 ```
 
 **Parameters:**
 - `description` - Brief project description (optional, will prompt if not provided)
+- `--current` - Existing project mode: analyze codebase, confirm findings with user
 - `--autonomous` - Enable full autonomous development workflow (Phases 1-5)
 - `--mode=standard` - Full browser testing (default, autonomous only)
 - `--mode=yolo` - Lint only, no browser tests (autonomous only)
@@ -24,53 +29,64 @@ The `/new-project` skill initializes a new project with the Claude Forge framewo
 
 ## Mode Comparison
 
-| Feature | Standard Mode | Autonomous Mode |
-|---------|---------------|-----------------|
-| CLAUDE.md | Yes | Yes |
-| Memories structure | Yes | Yes |
-| Reference docs | Yes | Yes |
-| Git initialization | Yes | Yes |
-| PRD creation | No | Yes |
-| Feature database | No | Yes |
-| ADRs | No | Yes |
-| MCP servers | No | Yes |
-| Auto-implementation | No | Yes |
+| Feature | New Project | Existing (--current) | + Autonomous |
+|---------|-------------|---------------------|--------------|
+| Prompts for details | Yes | No (analyzes) | Varies |
+| Codebase analysis | No | Yes | Yes if --current |
+| User confirmation | On input | On findings | At checkpoints |
+| CLAUDE.md | Template | Customized | Customized |
+| Memories structure | Yes | Yes | Yes |
+| Reference docs | Yes | Yes | Yes |
+| PRD creation | No | No | Yes |
+| Feature database | No | No | Yes |
 
 ## Overview
 
-### Standard Mode
+### New Project Mode (default)
 
-Quick setup for existing projects or human-directed development:
+Interactive setup for new projects:
+- Prompts for project name, description, tech stack
 - Initializes CLAUDE.md from template
 - Sets up session continuity (memories)
-- Copies reference document templates
 - Ready to use `/reflect`, `/new-feature`, etc.
 
-### Autonomous Mode
+### Existing Project Mode (--current)
+
+Analyzes existing codebase before initialization:
+- Scans for package.json, requirements.txt, etc.
+- Detects tech stack from dependencies
+- Discovers project structure and commands
+- **Presents findings to user for confirmation**
+- Customizes CLAUDE.md with discovered info
+
+### Autonomous Mode (--autonomous)
 
 Full autonomous development workflow:
 1. Product Requirements Document (PRD)
 2. Feature database with 50-400+ testable features
 3. Architecture decisions documented
-4. Ready for incremental autonomous implementation via `/implement-features`
+4. Ready for incremental implementation via `/implement-features`
 
 ---
 
-## Phase 0: Project Setup (BOTH MODES)
+## Phase 0: Project Setup (ALL MODES)
 
 This phase runs for ALL projects:
 
 ### 0.1 Gather Project Information
 
-If no project description provided in arguments:
-- **Ask user** for project name, description, and tech stack
+**New Project (no --current):**
+- Prompt user for project name, description, tech stack
 - Use AskUserQuestion tool with options for common stacks
-- Store responses for CLAUDE.md customization
+- Parse description if provided to infer details
 
-If description provided:
-- Parse to extract project name
-- Infer tech stack from keywords (React, Python, Node, etc.)
-- Ask for clarification if needed
+**Existing Project (--current):**
+- Analyze codebase structure using Glob and Read tools
+- Detect tech stack from dependency files
+- Extract project name from config files or directory
+- Discover existing commands (npm scripts, Makefile, etc.)
+- **Present findings to user for confirmation**
+- Allow corrections before proceeding
 
 ### 0.2 Check Prerequisites
 

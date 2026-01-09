@@ -124,11 +124,22 @@ git clone https://github.com/rynhardt81/claude-forge.git .claude
 # 3. Remove the .git from .claude
 rm -rf .claude/.git
 
-# 4. Initialize the framework (will prompt for project details)
-/new-project
+# 4. Initialize the framework with --current flag
+/new-project --current
 ```
 
-Claude will ask about your existing project and customize CLAUDE.md accordingly.
+The `--current` flag tells Claude to analyze your existing codebase:
+- **Discovers** your tech stack from package.json, requirements.txt, etc.
+- **Identifies** project structure, existing commands, and patterns
+- **Presents findings** for your confirmation before proceeding
+- **Customizes** CLAUDE.md with your project's actual details
+
+You can also combine with autonomous mode:
+```bash
+/new-project --current --autonomous
+```
+
+This analyzes your existing project, then creates a full PRD and feature database for continued development.
 
 ---
 
@@ -381,6 +392,7 @@ Skills are structured workflows invoked with `/skill-name`.
 | Create PR | `/create-pr` | Pull request with checklist |
 | Release | `/release` | Version release workflow |
 | New Project | `/new-project` | Initialize project (prompts for details) |
+| New Project | `/new-project --current` | Analyze existing project, confirm findings |
 | New Project | `/new-project --autonomous` | Initialize with full autonomous workflow |
 | Implement | `/implement-features` | Incremental feature loop |
 | PDF | `/pdf <command>` | PDF processing tasks |
