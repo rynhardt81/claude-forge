@@ -58,7 +58,7 @@ Use `/new-project` to initialize the Claude Forge framework:
 ```
 
 This sets up:
-- `CLAUDE.md` - Customized project instructions
+- `.claude/CLAUDE.md` - Customized project instructions
 - `.claude/memories/` - Session continuity
 - `.claude/reference/` - Architecture documentation templates
 
@@ -90,7 +90,7 @@ This analyzes your project:
 - Detects tech stack from package.json, requirements.txt, etc.
 - Identifies project structure and existing commands
 - Presents findings for confirmation
-- Customizes CLAUDE.md with discovered details
+- Customizes `.claude/CLAUDE.md` with discovered details
 
 Combine flags for existing project + autonomous:
 ```

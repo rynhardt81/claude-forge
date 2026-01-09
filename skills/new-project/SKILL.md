@@ -91,7 +91,7 @@ This phase runs for ALL projects:
 ### 0.2 Check Prerequisites
 
 - Verify we're in a valid project directory
-- Check for existing CLAUDE.md (warn if overwriting)
+- Check for existing `.claude/CLAUDE.md` (warn if overwriting)
 
 ### 0.3 Initialize CLAUDE.md
 
@@ -100,7 +100,7 @@ This phase runs for ALL projects:
   - Replace `[Project Name]` placeholder
   - Replace `[brief description]` placeholder
   - Update tech stack section
-- Write to `./CLAUDE.md`
+- Write to `.claude/CLAUDE.md`
 
 ### 0.4 Initialize Memories Structure
 

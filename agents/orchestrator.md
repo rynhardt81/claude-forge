@@ -69,7 +69,7 @@ mkdir -p artifacts/{prd,architecture,stories,specs,sprints}
 mkdir -p src tests docs
 
 # Copy framework files
-cp framework/CLAUDE.md ./CLAUDE.md
+cp framework/templates/CLAUDE.template.md .claude/CLAUDE.md
 cp -r framework/clad/* ./clad/
 
 # Create initial status file

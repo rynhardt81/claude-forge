@@ -177,8 +177,8 @@ This phase runs for ALL projects. Complete these steps:
 
 ```
 - Verify we're in a project directory (not the framework itself)
-- Check if CLAUDE.md already exists (warn if overwriting)
-- Check if .claude/ directory exists
+- Check if .claude/CLAUDE.md already exists (warn if overwriting)
+- Verify .claude/ directory exists (should exist from clone)
 ```
 
 ### 0.2 Initialize CLAUDE.md
@@ -194,7 +194,7 @@ This phase runs for ALL projects. Complete these steps:
    - **For existing projects (--current):**
      - Update Section 4 (Essential Commands) with `EXISTING_COMMANDS`
      - Update Section 5 (Architecture Summary) with discovered structure
-3. Write customized content to: `./CLAUDE.md`
+3. Write customized content to: `.claude/CLAUDE.md`
 
 ### 0.3 Initialize Memories Structure
 

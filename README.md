@@ -75,7 +75,7 @@ Or provide details inline:
 ```
 
 This sets up:
-- `CLAUDE.md` - Customized project instructions
+- `.claude/CLAUDE.md` - Customized project instructions
 - `.claude/memories/` - Session continuity
 - `.claude/reference/` - Architecture documentation
 
@@ -152,6 +152,7 @@ After cloning, your project structure should look like:
 ```
 your-project/
 ├── .claude/                    # Claude Forge framework
+│   ├── CLAUDE.md               # Your project's Claude instructions
 │   ├── agents/                 # Agent personas
 │   ├── skills/                 # Workflow skills
 │   ├── templates/              # Document templates
@@ -161,23 +162,22 @@ your-project/
 │   ├── mcp-servers/            # MCP server implementations
 │   ├── memories/               # Session continuity
 │   └── ...
-├── CLAUDE.md                   # Your project's Claude instructions
 ├── src/                        # Your source code
 └── ...
 ```
 
 ### Step 2: Create CLAUDE.md
 
-The `CLAUDE.md` file in your project root tells Claude how to work with your codebase.
+The `.claude/CLAUDE.md` file tells Claude how to work with your codebase. It's created automatically by `/new-project`, or you can create it manually.
 
 **Option A: Use the template**
 ```bash
-cp .claude/templates/CLAUDE.template.md ./CLAUDE.md
+cp .claude/templates/CLAUDE.template.md .claude/CLAUDE.md
 ```
 
 **Option B: Create minimal CLAUDE.md**
 
-Create `CLAUDE.md` in your project root with at minimum:
+Create `.claude/CLAUDE.md` with at minimum:
 
 ```markdown
 # CLAUDE.md
@@ -470,7 +470,7 @@ Reference docs define project architecture. Templates are in `reference/`.
 
 **First time:**
 ```
-Read .claude/CLAUDE.md and the project CLAUDE.md to understand the framework.
+Read .claude/CLAUDE.md to understand the framework and project context.
 ```
 
 **Resuming work:**
@@ -541,7 +541,7 @@ Options:
 
 | Item | Action | Location |
 |------|--------|----------|
-| CLAUDE.md | **Required** - Add project details | Project root |
+| CLAUDE.md | **Required** - Add project details | `.claude/CLAUDE.md` |
 | Reference docs | **Recommended** - Fill architecture | `.claude/reference/` |
 | Memories | **Optional** - Pre-seed preferences | `.claude/memories/` |
 
@@ -589,9 +589,9 @@ mkdir -p .claude/skills/my-skill
 ls -la .claude/
 ```
 
-**Check:** Is `CLAUDE.md` in your project root?
+**Check:** Is `CLAUDE.md` in the `.claude/` directory?
 ```bash
-ls -la CLAUDE.md
+ls -la .claude/CLAUDE.md
 ```
 
 ### Skills not working
