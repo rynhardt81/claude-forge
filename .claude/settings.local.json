@@ -4,7 +4,15 @@
       "Bash(mkdir:*)",
       "Bash(powershell -NoProfile -Command \"[Environment]::GetFolderPath\\(''UserProfile''\\)\")",
       "Bash(git init:*)",
-      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" status)"
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" status)",
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" rm \"docs/INTEGRATION-PROGRESS.md\" \"docs/QUICK-START-RESUME.md\")",
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" add CLAUDE.md)",
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" commit -m \"$\\(cat <<''EOF''\nchore: Remove references to deleted internal tracking files\n\nUpdate CLAUDE.md to remove links to docs/QUICK-START-RESUME.md\nand docs/INTEGRATION-PROGRESS.md which were removed in previous commit.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" push origin feature/pdf-skill-and-framework)",
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" rm -rf autocoder-master)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
