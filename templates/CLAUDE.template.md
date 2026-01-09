@@ -144,9 +144,19 @@ Use the `/reflect` skill for session management and continuity:
 | `/reflect on` | Enable auto-reflection at session end |
 
 **Storage locations:**
-* `.claude/memories/sessions/latest.md` — Most recent session
-* `.claude/memories/sessions/YYYY-MM-DD.md` — Date-stamped sessions
-* `.claude/memories/general.md` — General preferences and historical archive
+
+| File | Purpose |
+|------|---------|
+| `.claude/memories/sessions/latest.md` | Most recent session state |
+| `.claude/memories/sessions/YYYY-MM-DD.md` | Date-stamped session archives |
+| `.claude/memories/general.md` | General preferences and learnings |
+| `.claude/memories/progress-notes.md` | Ongoing work summaries and blockers |
+
+**What gets captured:**
+* Session summaries and context
+* Decisions made and rationale
+* Blockers encountered
+* Tasks in progress
 
 ### Workflow for Non-Trivial Changes
 
@@ -340,25 +350,20 @@ Use `/implement-features` to implement the feature database:
 /implement-features --resume     # Resume from last session
 ```
 
-### State Persistence
+### State Persistence (Autonomous Mode)
 
-State is preserved across sessions via three bridges:
+In addition to the core session continuity (Section 6), autonomous mode adds:
 
 1. **Feature Database** - `.claude/features/features.db`
-   - Which features are complete
+   - Tracks which features are complete/pending
    - Priority and ordering
-   - Test steps
+   - Test steps for each feature
 
-2. **Git Commits** - Source control
-   - All code changes
-   - Feature IDs in commit messages
+2. **Feature IDs in Commits** - Git integration
+   - Each commit references its feature ID
+   - Enables traceability from code to requirements
 
-3. **Progress Notes** - `.claude/memories/progress-notes.md`
-   - Session summaries
-   - Decisions made
-   - Blockers encountered
-
-### Resuming Work
+### Resuming Autonomous Work
 
 After a session ends, resume with:
 
@@ -366,17 +371,13 @@ After a session ends, resume with:
 /implement-features --resume
 ```
 
-Or use the reflect skill:
-
-```
-/reflect resume
-```
-
 This will:
-1. Read progress notes for context
-2. Query database for current state
+1. Read progress notes for context (from Section 6)
+2. Query feature database for current state
 3. Review recent git commits
-4. Continue from where you left off
+4. Continue implementing from where you left off
+
+> **Note:** For standard development, use `/reflect resume` instead (see Section 6).
 
 ---
 
