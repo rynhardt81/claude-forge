@@ -61,7 +61,17 @@ git clone https://github.com/rynhardt81/claude-forge.git .claude
 rm -rf .claude/.git
 
 # 4. Initialize the project with Claude Code
-/new-project "My awesome project"
+/new-project
+```
+
+The `/new-project` command will interactively ask you for:
+- **Project name** - What to call your project
+- **Description** - What the project does
+- **Tech stack** - Choose from common stacks or specify custom
+
+Or provide details inline:
+```bash
+/new-project "My awesome e-commerce app using Next.js"
 ```
 
 This sets up:
@@ -85,15 +95,20 @@ git clone https://github.com/rynhardt81/claude-forge.git .claude
 rm -rf .claude/.git
 
 # 4. Initialize with autonomous mode
-/new-project "E-commerce platform for handmade crafts" --autonomous
+/new-project --autonomous
 ```
 
-This triggers a 5-phase workflow:
-1. Requirements Discovery (PRD creation)
-2. Feature Breakdown (50-400+ features)
-3. Technical Planning (ADRs)
-4. Implementation Readiness (MCP setup)
-5. Kickoff → `/implement-features`
+You'll be prompted for project details, then the 5-phase workflow begins:
+1. **Requirements Discovery** - PRD creation with @analyst and @project-manager
+2. **Feature Breakdown** - 50-400+ features with @scrum-master
+3. **Technical Planning** - ADRs with @architect
+4. **Implementation Readiness** - MCP setup and security
+5. **Kickoff** → `/implement-features`
+
+Or provide the idea inline:
+```bash
+/new-project "E-commerce platform for handmade crafts" --autonomous
+```
 
 ### Option C: Existing Project
 
@@ -109,11 +124,11 @@ git clone https://github.com/rynhardt81/claude-forge.git .claude
 # 3. Remove the .git from .claude
 rm -rf .claude/.git
 
-# 4. Initialize the framework
-/new-project "Existing project description"
-
-# 5. Customize CLAUDE.md for your project (see Setup Guide below)
+# 4. Initialize the framework (will prompt for project details)
+/new-project
 ```
+
+Claude will ask about your existing project and customize CLAUDE.md accordingly.
 
 ---
 
@@ -365,7 +380,8 @@ Skills are structured workflows invoked with `/skill-name`.
 | Refactor | `/refactor` | Code refactoring workflow |
 | Create PR | `/create-pr` | Pull request with checklist |
 | Release | `/release` | Version release workflow |
-| New Project | `/new-project "idea"` | Initialize project with PRD |
+| New Project | `/new-project` | Initialize project (prompts for details) |
+| New Project | `/new-project --autonomous` | Initialize with full autonomous workflow |
 | Implement | `/implement-features` | Incremental feature loop |
 | PDF | `/pdf <command>` | PDF processing tasks |
 
@@ -471,13 +487,18 @@ For full autonomous project development:
 
 **1. Initialize Project:**
 ```
-/new-project "E-commerce platform for handmade crafts"
+/new-project --autonomous
+```
+
+Or with description:
+```
+/new-project "E-commerce platform for handmade crafts" --autonomous
 ```
 
 This creates:
-- PRD document
-- 50-400+ features in database
-- Architecture Decision Records
+- PRD document (via @analyst and @project-manager)
+- 50-400+ features in database (via @scrum-master)
+- Architecture Decision Records (via @architect)
 - MCP server setup
 
 **2. Implement Features:**
