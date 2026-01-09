@@ -11,13 +11,60 @@ You are initializing a new project using the Claude Forge framework.
 
 ## Arguments Received
 
-**Project Description:** $ARGUMENTS
+**Raw Arguments:** $ARGUMENTS
 
-## Determine Mode
+## Step 1: Parse Arguments and Gather Project Information
 
-Parse the arguments to determine the mode:
-- If `--autonomous` flag is present: **Autonomous Mode** (full PRD, features.db, ADRs)
+### 1.1 Parse Flags
+
+Extract from arguments:
+- `--autonomous` flag → Autonomous Mode (full PRD, features.db, ADRs)
+- `--mode=yolo|standard|hybrid` → Testing mode (autonomous only)
+- Everything else → Project description
+
+### 1.2 Gather Project Information (REQUIRED)
+
+**If no project description was provided (or it's empty/just flags):**
+
+Use the AskUserQuestion tool to gather essential project information:
+
+```
+Question 1: "What is your project name?"
+  - Header: "Project"
+  - Options: [Free text input via "Other"]
+
+Question 2: "Briefly describe what this project does"
+  - Header: "Description"
+  - Options: [Free text input via "Other"]
+
+Question 3: "What is the primary tech stack?"
+  - Header: "Tech Stack"
+  - Options:
+    - "Next.js + React (Recommended)" - Full-stack React framework
+    - "Node.js + Express" - Backend API server
+    - "Python + FastAPI" - Modern Python web framework
+    - "Other" - Specify custom stack
+```
+
+**If project description WAS provided:**
+
+Parse the description to extract:
+- Project name (infer from description or ask)
+- Brief description (use provided text)
+- Tech stack (infer from keywords like "React", "Python", "Node", etc., or ask)
+
+Store these values for use in CLAUDE.md customization:
+- `PROJECT_NAME` - The project name
+- `PROJECT_DESCRIPTION` - What the project does
+- `TECH_STACK` - Primary technologies (frontend, backend, database)
+
+## Step 2: Determine Mode
+
+Based on parsed arguments:
+- If `--autonomous` flag present: **Autonomous Mode**
 - Otherwise: **Standard Mode** (framework setup only)
+
+---
 
 ## Phase 0: Project Setup (BOTH MODES)
 
@@ -34,15 +81,14 @@ This phase runs for ALL projects. Complete these steps:
 ### 0.2 Initialize CLAUDE.md
 
 1. Read the template: `.claude/templates/CLAUDE.template.md`
-2. If user provided a project description, extract:
-   - Project name
-   - Brief description
-   - Likely tech stack (infer from description)
-3. Customize the template:
-   - Replace `[Project Name]` with actual name
-   - Replace `[brief description]` placeholder
-   - Update tech stack section if identifiable
-4. Write to: `./CLAUDE.md`
+2. Customize the template using gathered information:
+   - Replace `[Project Name]` with `PROJECT_NAME`
+   - Replace `[brief description of what the project does]` with `PROJECT_DESCRIPTION`
+   - Update Section 3 (Project Overview) with tech stack:
+     - Backend: (from TECH_STACK or placeholder)
+     - Frontend: (from TECH_STACK or placeholder)
+     - Database: (infer or placeholder)
+3. Write customized content to: `./CLAUDE.md`
 
 ### 0.3 Initialize Memories Structure
 

@@ -60,31 +60,51 @@ Full autonomous development workflow:
 
 This phase runs for ALL projects:
 
-1. **Check Prerequisites**
-   - Verify we're in a valid project directory
-   - Check for existing CLAUDE.md (warn if overwriting)
+### 0.1 Gather Project Information
 
-2. **Initialize CLAUDE.md**
-   - Copy from `.claude/templates/CLAUDE.template.md`
-   - Customize with project name and description
-   - Update tech stack if identifiable
+If no project description provided in arguments:
+- **Ask user** for project name, description, and tech stack
+- Use AskUserQuestion tool with options for common stacks
+- Store responses for CLAUDE.md customization
 
-3. **Initialize Memories Structure**
-   ```
-   .claude/memories/
-   ├── sessions/
-   │   └── latest.md
-   ├── general.md
-   └── progress-notes.md
-   ```
+If description provided:
+- Parse to extract project name
+- Infer tech stack from keywords (React, Python, Node, etc.)
+- Ask for clarification if needed
 
-4. **Initialize Reference Documents**
-   - Copy templates from `.claude/reference/`
-   - Remove `.template` suffix
+### 0.2 Check Prerequisites
 
-5. **Initialize Git** (if not exists)
-   - `git init`
-   - Initial commit with framework files
+- Verify we're in a valid project directory
+- Check for existing CLAUDE.md (warn if overwriting)
+
+### 0.3 Initialize CLAUDE.md
+
+- Read `.claude/templates/CLAUDE.template.md`
+- Customize with gathered information:
+  - Replace `[Project Name]` placeholder
+  - Replace `[brief description]` placeholder
+  - Update tech stack section
+- Write to `./CLAUDE.md`
+
+### 0.4 Initialize Memories Structure
+
+```
+.claude/memories/
+├── sessions/
+│   └── latest.md
+├── general.md
+└── progress-notes.md
+```
+
+### 0.5 Initialize Reference Documents
+
+- Copy templates from `.claude/reference/`
+- Remove `.template` suffix
+
+### 0.6 Initialize Git (if not exists)
+
+- `git init`
+- Initial commit with framework files
 
 **Standard Mode stops here.**
 
