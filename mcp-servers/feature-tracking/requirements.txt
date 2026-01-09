@@ -1,0 +1,14 @@
+# Feature Tracking MCP Server Dependencies
+# Install with: pip install -r requirements.txt
+
+# MCP Server Framework
+mcp>=1.0.0
+
+# FastMCP for easy tool definition
+fastmcp>=0.1.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Validation
+pydantic>=2.0.0

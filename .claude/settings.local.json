@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(powershell -NoProfile -Command \"[Environment]::GetFolderPath\\(''UserProfile''\\)\")",
+      "Bash(git init:*)",
+      "Bash(git -C \"c:\\\\Development\\\\Frameworks\\\\base-claude\" status)"
+    ]
+  }
+}
