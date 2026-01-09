@@ -145,13 +145,13 @@ LOW VALUE   │   FILL-INS  │   AVOID     │
 
 ### Requires
 - Discovery artifacts from @analyst
-- `clad/templates/prd-template.md`
-- `clad/templates/epic-template.md`
+- `templates/prd.md`
+- `templates/epic-minimal.md`
 
 ### Produces
-- `artifacts/prd/[project]-prd.md`
-- `artifacts/prd/epics/*.md`
-- `artifacts/prd/roadmap.md`
+- `docs/prd.md`
+- `docs/epics/*.md`
+- `docs/roadmap.md` (optional)
 
 ---
 

@@ -335,21 +335,38 @@ Use `@agent-name` to invoke a specific persona:
 
 ## Templates
 
-### Available Templates
+### Task System Templates (used by /new-project Phase 3)
+
+| Template | Purpose | Used By |
+|----------|---------|---------|
+| `epic-minimal.md` | Epic with task list, dependencies | Phase 3 task planning |
+| `task.md` | Task with continuation context | Phase 3 task planning |
+| `task-registry.json` | Master task/epic registry | Phase 3 initialization |
+| `config.json` | Project configuration | Phase 3 initialization |
+
+### Documentation Templates
+
+| Template | Purpose | Used By |
+|----------|---------|---------|
+| `prd.md` | Product Requirements Document | Phase 1 @project-manager |
+| `adr-template.md` | Architecture Decision Record | Phase 2 @architect |
+| `feature-spec.md` | Detailed feature specification | Complex features |
+| `user-story.md` | User story with acceptance criteria | PRD creation |
+| `epic-full.md` | Full enterprise epic (business planning) | Large-scale projects |
+
+### Session Templates
 
 | Template | Purpose |
 |----------|---------|
-| `prd.md` | Product Requirements Document |
-| `epic-minimal.md` | Epic with task list |
-| `task.md` | Task with dependencies and continuation context |
-| `task-registry.json` | Master task/epic registry |
-| `config.json` | Project configuration |
-| `adr-template.md` | Architecture Decision Record |
+| `progress-notes.md` | Session handoff notes |
+| `session-summary.md` | Session summary format |
+| `CLAUDE.template.md` | Project CLAUDE.md template |
 
 ### Using Templates
 
-Templates are in `templates/` directory. Reference them when creating documents:
+Templates are in `templates/` directory. The `/new-project` skill automatically uses the correct templates during Phase 3.
 
+For manual use:
 ```
 Create an epic using templates/epic-minimal.md as the format
 ```
