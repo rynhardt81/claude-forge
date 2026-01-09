@@ -2,30 +2,95 @@
 
 ## Purpose
 
-The `/new-project` skill orchestrates the complete project initialization workflow, from requirements gathering to automated feature implementation. It integrates the PRD creation, feature breakdown, and incremental development patterns from autonomous development systems.
+The `/new-project` skill initializes a new project with the Claude Forge framework. It supports two modes:
+
+1. **Standard Mode** - Quick framework setup for human-directed development
+2. **Autonomous Mode** - Full PRD, feature database, and ADRs for autonomous development
 
 ## Invocation
 
 ```
-/new-project [description]
-/new-project --mode=<standard|yolo|hybrid>
+/new-project "project description"                    # Standard mode
+/new-project "project description" --autonomous       # Autonomous mode
+/new-project "project description" --autonomous --mode=yolo  # Fast autonomous
 ```
 
 **Parameters:**
 - `description` - Brief project description (optional, will prompt if not provided)
-- `--mode=standard` - Full browser testing (default)
-- `--mode=yolo` - Lint only, no browser tests (rapid prototyping)
-- `--mode=hybrid` - Browser tests for critical categories only
+- `--autonomous` - Enable full autonomous development workflow (Phases 1-5)
+- `--mode=standard` - Full browser testing (default, autonomous only)
+- `--mode=yolo` - Lint only, no browser tests (autonomous only)
+- `--mode=hybrid` - Browser tests for critical categories only (autonomous only)
+
+## Mode Comparison
+
+| Feature | Standard Mode | Autonomous Mode |
+|---------|---------------|-----------------|
+| CLAUDE.md | Yes | Yes |
+| Memories structure | Yes | Yes |
+| Reference docs | Yes | Yes |
+| Git initialization | Yes | Yes |
+| PRD creation | No | Yes |
+| Feature database | No | Yes |
+| ADRs | No | Yes |
+| MCP servers | No | Yes |
+| Auto-implementation | No | Yes |
 
 ## Overview
 
-This skill transforms a project idea into a fully scaffolded project with:
+### Standard Mode
+
+Quick setup for existing projects or human-directed development:
+- Initializes CLAUDE.md from template
+- Sets up session continuity (memories)
+- Copies reference document templates
+- Ready to use `/reflect`, `/new-feature`, etc.
+
+### Autonomous Mode
+
+Full autonomous development workflow:
 1. Product Requirements Document (PRD)
 2. Feature database with 50-400+ testable features
 3. Architecture decisions documented
-4. Ready for incremental autonomous implementation
+4. Ready for incremental autonomous implementation via `/implement-features`
 
-## Workflow Phases
+---
+
+## Phase 0: Project Setup (BOTH MODES)
+
+This phase runs for ALL projects:
+
+1. **Check Prerequisites**
+   - Verify we're in a valid project directory
+   - Check for existing CLAUDE.md (warn if overwriting)
+
+2. **Initialize CLAUDE.md**
+   - Copy from `.claude/templates/CLAUDE.template.md`
+   - Customize with project name and description
+   - Update tech stack if identifiable
+
+3. **Initialize Memories Structure**
+   ```
+   .claude/memories/
+   ├── sessions/
+   │   └── latest.md
+   ├── general.md
+   └── progress-notes.md
+   ```
+
+4. **Initialize Reference Documents**
+   - Copy templates from `.claude/reference/`
+   - Remove `.template` suffix
+
+5. **Initialize Git** (if not exists)
+   - `git init`
+   - Initial commit with framework files
+
+**Standard Mode stops here.**
+
+---
+
+## Autonomous Mode Phases (1-5)
 
 ### Phase 1: Requirements Discovery
 - Invoke `@analyst` to gather requirements

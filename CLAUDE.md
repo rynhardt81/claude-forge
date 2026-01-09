@@ -22,7 +22,8 @@ This file provides Claude Code with context about this framework and how to use 
 
 | Command | Description |
 |---------|-------------|
-| `/new-project "idea"` | Initialize a new project with PRD and feature database |
+| `/new-project "idea"` | Initialize project with framework (standard mode) |
+| `/new-project "idea" --autonomous` | Initialize with full autonomous workflow |
 | `/implement-features` | Implement features from database one at a time |
 | `/implement-features --mode=yolo` | Fast mode (lint only, no browser tests) |
 | `/implement-features --resume` | Resume from last session |
@@ -45,14 +46,27 @@ This file provides Claude Code with context about this framework and how to use 
 
 ---
 
-## Autonomous Development
+## Project Initialization
 
-### Creating a New Project
+### Standard Mode
 
-Use `/new-project` to go from idea to implementation-ready:
+Use `/new-project` to initialize the Claude Forge framework:
 
 ```
-/new-project "E-commerce app for selling handmade crafts"
+/new-project "My project description"
+```
+
+This sets up:
+- `CLAUDE.md` - Customized project instructions
+- `.claude/memories/` - Session continuity
+- `.claude/reference/` - Architecture documentation templates
+
+### Autonomous Mode
+
+Add `--autonomous` for full autonomous development:
+
+```
+/new-project "E-commerce app for selling handmade crafts" --autonomous
 ```
 
 This triggers a 5-phase workflow:

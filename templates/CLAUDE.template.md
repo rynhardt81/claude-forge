@@ -327,10 +327,10 @@ Detailed feature documentation lives in `.claude/features/`.
 
 ### Creating a New Project
 
-Use `/new-project` to go from idea to implementation-ready:
+Use `/new-project --autonomous` to go from idea to implementation-ready:
 
 ```
-/new-project "Your project idea here"
+/new-project "Your project idea here" --autonomous
 ```
 
 This triggers a 5-phase workflow:

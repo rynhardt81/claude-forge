@@ -45,29 +45,59 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 
 ## Quick Start
 
-### New Project
+### Option A: Standard Development (Recommended for most users)
+
+Use this for human-directed development with AI assistance:
 
 ```bash
 # 1. Create your project directory
 mkdir my-new-project
 cd my-new-project
 
-# 2. Initialize git
-git init
-
-# 3. Clone Claude Forge into .claude directory
+# 2. Clone Claude Forge into .claude directory
 git clone https://github.com/rynhardt81/claude-forge.git .claude
 
-# 4. Remove the .git from .claude (it's now part of your project)
+# 3. Remove the .git from .claude (it's now part of your project)
 rm -rf .claude/.git
 
-# 5. Copy the CLAUDE.md template to your project root
-cp .claude/templates/CLAUDE.template.md ./CLAUDE.md
-
-# 6. Customize CLAUDE.md for your project (see Setup Guide below)
+# 4. Initialize the project with Claude Code
+/new-project "My awesome project"
 ```
 
-### Existing Project
+This sets up:
+- `CLAUDE.md` - Customized project instructions
+- `.claude/memories/` - Session continuity
+- `.claude/reference/` - Architecture documentation
+
+### Option B: Autonomous Development
+
+Use this for full autonomous implementation from idea to code:
+
+```bash
+# 1. Create your project directory
+mkdir my-new-project
+cd my-new-project
+
+# 2. Clone Claude Forge into .claude directory
+git clone https://github.com/rynhardt81/claude-forge.git .claude
+
+# 3. Remove the .git from .claude
+rm -rf .claude/.git
+
+# 4. Initialize with autonomous mode
+/new-project "E-commerce platform for handmade crafts" --autonomous
+```
+
+This triggers a 5-phase workflow:
+1. Requirements Discovery (PRD creation)
+2. Feature Breakdown (50-400+ features)
+3. Technical Planning (ADRs)
+4. Implementation Readiness (MCP setup)
+5. Kickoff → `/implement-features`
+
+### Option C: Existing Project
+
+Add Claude Forge to an existing codebase:
 
 ```bash
 # 1. Navigate to your project root
@@ -79,8 +109,8 @@ git clone https://github.com/rynhardt81/claude-forge.git .claude
 # 3. Remove the .git from .claude
 rm -rf .claude/.git
 
-# 4. Copy the CLAUDE.md template to your project root
-cp .claude/templates/CLAUDE.template.md ./CLAUDE.md
+# 4. Initialize the framework
+/new-project "Existing project description"
 
 # 5. Customize CLAUDE.md for your project (see Setup Guide below)
 ```
