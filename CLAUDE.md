@@ -429,8 +429,6 @@ For detailed documentation, see:
 ## Getting Help
 
 - `/help` - Show available commands
-- Read `docs/QUICK-START-RESUME.md` for integration status
-- Check `docs/INTEGRATION-PROGRESS.md` for full details
 
 ---
 
