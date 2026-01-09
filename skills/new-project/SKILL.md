@@ -2,70 +2,105 @@
 
 ## Purpose
 
-The `/new-project` skill initializes a project with the Claude Forge framework. It supports multiple modes:
+The `/new-project` skill fully initializes a project with the Claude Forge framework, creating all required documentation for effective AI-assisted development. It runs a **continuous workflow** through all phases regardless of project type.
 
-1. **New Project** - Interactive setup for new projects
-2. **Existing Project** - Analyze existing codebase and integrate framework
-3. **Autonomous Mode** - Full PRD, feature database, and ADRs for autonomous development
+## Key Principle
+
+**All projects get full documentation.** The framework's value comes from having PRD, architecture decisions, and feature planning in place. The `--autonomous` flag adds automated implementation tracking, but documentation is always created.
 
 ## Invocation
 
 ```
-/new-project                                          # New project, prompts for details
+/new-project                                          # New project, full workflow
 /new-project "project description"                    # New project with description
-/new-project --current                                # Existing project, analyzes codebase
-/new-project --autonomous                             # New + autonomous workflow
-/new-project --current --autonomous                   # Existing + autonomous workflow
+/new-project --current                                # Existing project, analyzes first
+/new-project --autonomous                             # New + feature database for automation
+/new-project --current --autonomous                   # Existing + feature database
 /new-project --autonomous --mode=yolo                 # Fast autonomous mode
+/new-project --minimal                                # Framework only, skip documentation
 ```
 
 **Parameters:**
 - `description` - Brief project description (optional, will prompt if not provided)
 - `--current` - Existing project mode: analyze codebase, confirm findings with user
-- `--autonomous` - Enable full autonomous development workflow (Phases 1-5)
+- `--autonomous` - Add feature database for `/implement-features` automation
+- `--minimal` - Skip documentation phases (framework setup only)
 - `--mode=standard` - Full browser testing (default, autonomous only)
 - `--mode=yolo` - Lint only, no browser tests (autonomous only)
 - `--mode=hybrid` - Browser tests for critical categories only (autonomous only)
 
 ## Mode Comparison
 
-| Feature | New Project | Existing (--current) | + Autonomous |
-|---------|-------------|---------------------|--------------|
-| Prompts for details | Yes | No (analyzes) | Varies |
-| Codebase analysis | No | Yes | Yes if --current |
-| User confirmation | On input | On findings | At checkpoints |
-| CLAUDE.md | Template | Customized | Customized |
-| Memories structure | Yes | Yes | Yes |
-| Reference docs | Yes | Yes | Yes |
-| PRD creation | No | No | Yes |
-| Feature database | No | No | Yes |
+| Feature | Standard | --current | --autonomous | --minimal |
+|---------|----------|-----------|--------------|-----------|
+| Framework setup | Yes | Yes | Yes | Yes |
+| Codebase analysis | No | Yes | If --current | No |
+| PRD creation | Yes | Yes | Yes | No |
+| Architecture docs | Yes | Yes | Yes | No |
+| Feature planning | Yes (manual) | Yes (manual) | Yes (database) | No |
+| Feature database | No | No | Yes | No |
+| MCP server setup | No | No | Yes | No |
 
-## Overview
+## Workflow Overview
 
-### New Project Mode (default)
+The skill runs through phases **continuously**, guiding the user from start to finish:
 
-Interactive setup for new projects:
-- Prompts for project name, description, tech stack
-- Initializes CLAUDE.md from template
-- Sets up session continuity (memories)
-- Ready to use `/reflect`, `/new-feature`, etc.
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 0: Framework Setup                        (ALL)       │
+│ - Initialize .claude/ structure                             │
+│ - Create CLAUDE.md from template                            │
+│ - Set up memories and references                            │
+├─────────────────────────────────────────────────────────────┤
+│ Phase 1: Requirements Discovery                 (ALL)       │
+│ - @analyst gathers requirements                             │
+│ - @project-manager creates PRD                              │
+│ - Output: docs/prd.md                                       │
+├─────────────────────────────────────────────────────────────┤
+│ Phase 2: Architecture & Standards               (ALL)       │
+│ - @architect creates ADRs                                   │
+│ - Populate reference documents                              │
+│ - Output: .claude/reference/06-architecture-decisions.md    │
+├─────────────────────────────────────────────────────────────┤
+│ Phase 3: Feature Planning                       (ALL)       │
+│ - @scrum-master breaks PRD into features                    │
+│ - Map to 20 feature categories                              │
+│ - Output: docs/feature-breakdown.md (manual tracking)       │
+│         OR features.db (if --autonomous)                    │
+├─────────────────────────────────────────────────────────────┤
+│ Phase 4: Implementation Readiness     (--autonomous only)   │
+│ - Set up MCP servers                                        │
+│ - Initialize security model                                 │
+│ - Configure testing mode                                    │
+├─────────────────────────────────────────────────────────────┤
+│ Phase 5: Kickoff                      (--autonomous only)   │
+│ - Display summary                                           │
+│ - Invoke /implement-features                                │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Existing Project Mode (--current)
+## Standard Mode (Default)
 
-Analyzes existing codebase before initialization:
-- Scans for package.json, requirements.txt, etc.
-- Detects tech stack from dependencies
-- Discovers project structure and commands
-- **Presents findings to user for confirmation**
-- Customizes CLAUDE.md with discovered info
+Creates full documentation for manual development:
+- PRD document for requirements
+- Architecture decisions documented
+- Feature breakdown for tracking progress
+- Ready to use `/new-feature`, `/fix-bug`, etc.
 
-### Autonomous Mode (--autonomous)
+## Existing Project Mode (--current)
 
-Full autonomous development workflow:
-1. Product Requirements Document (PRD)
-2. Feature database with 50-400+ testable features
-3. Architecture decisions documented
-4. Ready for incremental implementation via `/implement-features`
+Same as standard, but starts by analyzing the codebase:
+- Detects tech stack, project structure, existing commands
+- Presents findings to user for confirmation
+- Customizes all documentation based on existing code
+- PRD reflects current state + planned enhancements
+
+## Autonomous Mode (--autonomous)
+
+Adds automated implementation tracking:
+- Feature database instead of markdown file
+- MCP server for feature state management
+- Ready for `/implement-features` automation
 
 ---
 
@@ -114,83 +149,293 @@ This phase runs for ALL projects:
 
 ### 0.5 Initialize Reference Documents
 
-- Copy templates from `.claude/reference/`
-- Remove `.template` suffix
+- Copy templates from `.claude/reference/` removing `.template` suffix
+- **Delete the original `.template.md` files after copying**
+
+```bash
+# Example: For each template file
+cp .claude/reference/01-system-overview.template.md .claude/reference/01-system-overview.md
+rm .claude/reference/01-system-overview.template.md
+```
+
+This ensures only the active documents remain, avoiding confusion between templates and project-specific content.
 
 ### 0.6 Initialize Git (if not exists)
 
 - `git init`
 - Initial commit with framework files
 
-**Standard Mode stops here.**
+### 0.7 Phase 0 Complete - Continue to Documentation
+
+Display checkpoint:
+```
+## Phase 0 Complete: Framework Initialized
+
+✅ .claude/ structure created
+✅ CLAUDE.md customized
+✅ Memories initialized
+✅ Reference templates ready
+
+**Next: Phase 1 - Requirements Discovery**
+
+The framework is set up. Now let's create the documentation
+that makes AI-assisted development effective.
+
+Continue to create PRD and architecture documentation?
+```
+
+**If `--minimal` flag: STOP HERE.** Otherwise continue to Phase 1.
 
 ---
 
-## Autonomous Mode Phases (1-5)
+## Phase 1: Requirements Discovery (ALL MODES)
 
-### Phase 1: Requirements Discovery
-- Invoke `@analyst` to gather requirements
-- Invoke `@project-manager` to create PRD
-- Output: `docs/prd.md` (Tier 2 master document)
+This phase creates the Product Requirements Document.
 
-### Phase 2: Feature Breakdown
-- Invoke `@scrum-master` to break PRD into epics/stories
-- Map stories to 20 feature categories
-- Create features in database via MCP
-- Output: `features.db` with all features marked `passes: false`
+### 1.1 Invoke @analyst
 
-### Phase 3: Technical Planning
-- Invoke `@architect` to create ADRs
-- Invoke `@ux-designer` for wireframes (if UI project)
-- Output: `.claude/reference/06-architecture-decisions.md`
+- For **new projects**: Interview user about requirements
+- For **existing projects (--current)**: Analyze codebase + ask about planned enhancements
 
-### Phase 4: Implementation Readiness
-- Set up MCP servers (feature tracking, browser automation)
-- Initialize security model (command allowlist)
-- Configure testing mode (standard/yolo/hybrid)
-- Create `init.sh` for development server startup
+Questions to gather:
+- Core functionality and user goals
+- Target users and use cases
+- Key features and priorities
+- Non-functional requirements (performance, security)
+- Constraints and limitations
 
-### Phase 5: Kickoff
-- Display project summary (features count, categories, estimated complexity)
-- Show first 5 features to be implemented
-- Ask user: "Ready to begin incremental implementation?"
-- If approved: Start incremental feature loop
+### 1.2 Invoke @project-manager
+
+- Transform gathered requirements into structured PRD
+- Use template: `.claude/templates/prd.md`
+- Include: vision, goals, user stories, success criteria
+
+### 1.3 Output
+
+- Save PRD to: `docs/prd.md`
+- This becomes a **Tier 2 master document**
+
+### 1.4 Checkpoint
+
+```
+## Phase 1 Complete: PRD Created
+
+📄 docs/prd.md created
+
+**Summary:**
+- [X user stories identified]
+- [Key features listed]
+- [Success criteria defined]
+
+Review the PRD and confirm to continue to Architecture phase?
+```
+
+---
+
+## Phase 2: Architecture & Standards (ALL MODES)
+
+This phase documents technical decisions and fills reference docs.
+
+### 2.1 Invoke @architect
+
+Based on PRD and tech stack, create Architecture Decision Records:
+- ADR-001: Frontend framework choice
+- ADR-002: Backend/API approach
+- ADR-003: Database selection
+- ADR-004: Authentication strategy
+- ADR-005: Deployment approach
+
+### 2.2 Populate Reference Documents
+
+Update the reference templates with project-specific content:
+- `01-system-overview.md` - From PRD summary
+- `02-architecture-and-tech-stack.md` - From ADRs
+- `03-security-auth-and-access.md` - Security decisions
+- `04-development-standards-and-structure.md` - Coding standards
+
+### 2.3 UX Planning (if UI project)
+
+- Invoke @ux-designer for key user flows
+- Create wireframe descriptions or diagrams
+- Document in `docs/ux/` or reference docs
+
+### 2.4 Output
+
+- ADRs in: `.claude/reference/06-architecture-decisions.md`
+- Reference docs populated with project specifics
+
+### 2.5 Checkpoint
+
+```
+## Phase 2 Complete: Architecture Documented
+
+📐 ADRs created:
+- ADR-001: [decision]
+- ADR-002: [decision]
+- ...
+
+📚 Reference docs updated
+
+Review architecture decisions and continue to Feature Planning?
+```
+
+---
+
+## Phase 3: Feature Planning (ALL MODES)
+
+This phase breaks down the PRD into implementable features.
+
+### 3.1 Invoke @scrum-master
+
+- Break PRD into epics (major feature areas)
+- Break epics into user stories
+- Break stories into features with acceptance criteria
+
+### 3.2 Map to Categories
+
+Map each feature to one of 20 categories (see `FEATURE-CATEGORIES.md`):
+- A: Security & Auth
+- B: Navigation
+- C: Data (CRUD)
+- ... through T: UI Polish
+
+### 3.3 Output (varies by mode)
+
+**Standard Mode (no --autonomous):**
+- Create `docs/feature-breakdown.md` with full feature list
+- Features tracked manually via markdown checkboxes
+- Use with `/new-feature` skill for implementation
+
+**Autonomous Mode (--autonomous):**
+- Create `features.db` with all features
+- Each feature marked `passes: false`
+- Ready for `/implement-features` automation
+
+### 3.4 Checkpoint
+
+```
+## Phase 3 Complete: Features Planned
+
+📋 Feature breakdown complete:
+- [X] epics identified
+- [Y] user stories
+- [Z] individual features
+- Mapped to [N] categories
+
+**Feature tracking:** [manual via markdown | automated via database]
+
+[If not autonomous]: Project ready for development!
+Use /new-feature to implement features one at a time.
+
+[If autonomous]: Continue to Implementation Readiness?
+```
+
+**If NOT `--autonomous`: STOP HERE.** Project is ready for manual development.
+
+---
+
+## Phase 4: Implementation Readiness (--autonomous only)
+
+This phase sets up automated implementation infrastructure.
+
+### 4.1 Set up MCP Servers
+
+- Feature tracking MCP server
+- Browser automation MCP (if standard/hybrid testing mode)
+
+### 4.2 Initialize Security Model
+
+- Create/verify `.claude/security/allowed-commands.md`
+- Configure command validators for project type
+
+### 4.3 Configure Testing Mode
+
+Based on `--mode` flag:
+- `standard`: Full browser automation testing
+- `yolo`: Lint and type-check only
+- `hybrid`: Browser tests for critical categories only
+
+### 4.4 Create init.sh
+
+Development server startup script based on tech stack.
+
+---
+
+## Phase 5: Kickoff (--autonomous only)
+
+### 5.1 Display Summary
+
+```
+## Project Ready for Autonomous Implementation
+
+📊 Summary:
+- Total features: [X]
+- Categories: [Y]
+- Testing mode: [standard/yolo/hybrid]
+
+📋 First 5 features to implement:
+1. [Feature name] (Category)
+2. [Feature name] (Category)
+3. ...
+
+Ready to begin implementation with /implement-features?
+```
+
+### 5.2 Start Implementation
+
+If user approves, invoke `/implement-features` to begin the automated loop.
 
 ## Execution Flow
 
 ```mermaid
 graph TD
-    A[/new-project invoked] --> B{Project exists?}
-    B -->|No| C[Phase 1: Requirements Discovery]
-    B -->|Yes| D[Error: Project already initialized]
+    A[/new-project invoked] --> B{--current flag?}
+    B -->|Yes| C[Analyze existing codebase]
+    B -->|No| D[Prompt for project details]
+    C --> E[Present findings for confirmation]
+    D --> F[Phase 0: Framework Setup]
+    E --> F
 
-    C --> E[@analyst: Gather requirements]
-    E --> F[@project-manager: Create PRD]
-    F --> G[Save docs/prd.md]
+    F --> G[Initialize .claude/ structure]
+    G --> H[Create CLAUDE.md]
+    H --> I[Set up memories & references]
+    I --> J[Git init if needed]
+    J --> K{--minimal flag?}
+    K -->|Yes| L[STOP: Framework only]
+    K -->|No| M[Phase 1: Requirements Discovery]
 
-    G --> H[Phase 2: Feature Breakdown]
-    H --> I[@scrum-master: Break into epics/stories]
-    I --> J[Map to 20 categories]
-    J --> K[Create feature records]
-    K --> L[Save to features.db]
+    M --> N[@analyst: Gather requirements]
+    N --> O[@project-manager: Create PRD]
+    O --> P[Save docs/prd.md]
+    P --> Q[Checkpoint: Review PRD]
 
-    L --> M[Phase 3: Technical Planning]
-    M --> N[@architect: Create ADRs]
-    N --> O{UI project?}
-    O -->|Yes| P[@ux-designer: Wireframes]
-    O -->|No| Q[Skip UX]
-    P --> Q
+    Q --> R[Phase 2: Architecture & Standards]
+    R --> S[@architect: Create ADRs]
+    S --> T[Populate reference docs]
+    T --> U{UI project?}
+    U -->|Yes| V[@ux-designer: UX planning]
+    U -->|No| W[Skip UX]
+    V --> W
+    W --> X[Checkpoint: Review architecture]
 
-    Q --> R[Phase 4: Implementation Readiness]
-    R --> S[Set up MCP servers]
-    S --> T[Initialize security model]
-    T --> U[Create init.sh]
+    X --> Y[Phase 3: Feature Planning]
+    Y --> Z[@scrum-master: Break into features]
+    Z --> AA[Map to 20 categories]
+    AA --> AB{--autonomous flag?}
+    AB -->|No| AC[Create feature-breakdown.md]
+    AC --> AD[STOP: Ready for manual dev]
+    AB -->|Yes| AE[Create features.db]
 
-    U --> V[Phase 5: Kickoff]
-    V --> W[Display summary]
-    W --> X{User approves?}
-    X -->|Yes| Y[Start /implement-features]
-    X -->|No| Z[Save state, exit]
+    AE --> AF[Phase 4: Implementation Readiness]
+    AF --> AG[Set up MCP servers]
+    AG --> AH[Initialize security model]
+    AH --> AI[Configure testing mode]
+
+    AI --> AJ[Phase 5: Kickoff]
+    AJ --> AK[Display summary]
+    AK --> AL{User approves?}
+    AL -->|Yes| AM[Invoke /implement-features]
+    AL -->|No| AN[Save state, exit]
 ```
 
 ## Phase Details
@@ -357,11 +602,14 @@ Balances speed and quality for internal tools
 
 ## Notes
 
-- This skill is designed for NEW projects only
-- For existing projects, use `/implement-features` directly
-- The feature breakdown process can take 5-15 minutes depending on complexity
-- The skill will create multiple commits as it progresses
+- This skill works for **both new and existing projects**
+- Use `--current` flag to analyze existing codebase first
+- Use `--minimal` to skip documentation phases (framework setup only)
+- Use `--autonomous` to add feature database for automated implementation
+- The full workflow (Phases 0-3) takes 15-30 minutes depending on complexity
+- Each phase has a checkpoint for user review and approval
 - User can pause at any checkpoint and resume later
+- Template files are deleted after reference docs are created
 
 ## See Also
 

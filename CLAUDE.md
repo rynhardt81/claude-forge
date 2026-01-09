@@ -22,9 +22,10 @@ This file provides Claude Code with context about this framework and how to use 
 
 | Command | Description |
 |---------|-------------|
-| `/new-project "idea"` | Initialize project with framework (standard mode) |
-| `/new-project --current` | Analyze existing project, confirm findings |
-| `/new-project --autonomous` | Full autonomous workflow (PRD, features, ADRs) |
+| `/new-project "idea"` | Full workflow: framework + PRD + ADRs + features |
+| `/new-project --current` | Same, but analyzes existing codebase first |
+| `/new-project --autonomous` | Add feature database for automated implementation |
+| `/new-project --minimal` | Framework setup only (skip documentation) |
 | `/implement-features` | Implement features from database one at a time |
 | `/implement-features --mode=yolo` | Fast mode (lint only, no browser tests) |
 | `/implement-features --resume` | Resume from last session |
@@ -49,38 +50,32 @@ This file provides Claude Code with context about this framework and how to use 
 
 ## Project Initialization
 
-### Standard Mode
+### Key Principle
 
-Use `/new-project` to initialize the Claude Forge framework:
+**All projects get full documentation.** The `/new-project` skill runs a continuous workflow that creates PRD, architecture decisions, and feature planning. This documentation is what makes AI-assisted development effective.
+
+### Standard Mode (Default)
+
+Use `/new-project` to run the full workflow:
 
 ```
 /new-project "My project description"
 ```
 
-This sets up:
-- `.claude/CLAUDE.md` - Customized project instructions
-- `.claude/memories/` - Session continuity
-- `.claude/reference/` - Architecture documentation templates
+This runs through all phases:
 
-### Autonomous Mode
+| Phase | What Happens | Output |
+|-------|--------------|--------|
+| 0 | Framework setup | `.claude/` structure, CLAUDE.md, memories |
+| 1 | Requirements discovery | `docs/prd.md` |
+| 2 | Architecture & standards | ADRs, populated reference docs |
+| 3 | Feature planning | `docs/feature-breakdown.md` |
 
-Add `--autonomous` for full autonomous development:
-
-```
-/new-project "E-commerce app for selling handmade crafts" --autonomous
-```
-
-This triggers a 5-phase workflow:
-
-1. **Requirements Discovery** - @analyst and @project-manager create PRD
-2. **Feature Breakdown** - @scrum-master creates 50-400+ features in database
-3. **Technical Planning** - @architect creates ADRs
-4. **Implementation Readiness** - Setup MCP servers and security
-5. **Kickoff** - User approval, start implementation
+After Phase 3, your project is ready for manual development using `/new-feature`, `/fix-bug`, etc.
 
 ### Existing Project Mode
 
-Use `--current` to integrate with an existing codebase:
+Use `--current` to analyze an existing codebase first:
 
 ```
 /new-project --current
@@ -90,12 +85,31 @@ This analyzes your project:
 - Detects tech stack from package.json, requirements.txt, etc.
 - Identifies project structure and existing commands
 - Presents findings for confirmation
-- Customizes `.claude/CLAUDE.md` with discovered details
+- Runs the same Phases 0-3 with discovered details
 
-Combine flags for existing project + autonomous:
+### Autonomous Mode
+
+Add `--autonomous` for automated implementation tracking:
+
 ```
+/new-project "E-commerce app" --autonomous
 /new-project --current --autonomous
 ```
+
+This adds Phases 4-5:
+- Feature database (`features.db`) instead of markdown
+- MCP server setup for automation
+- Ready for `/implement-features`
+
+### Minimal Mode
+
+Use `--minimal` if you only want framework setup without documentation:
+
+```
+/new-project --minimal
+```
+
+This only runs Phase 0 (framework setup) and stops.
 
 ### Implementing Features
 
