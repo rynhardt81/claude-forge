@@ -165,7 +165,40 @@ This ensures only the active documents remain, avoiding confusion between templa
 - `git init`
 - Initial commit with framework files
 
-### 0.7 Phase 0 Complete - Continue to Documentation
+### 0.7 Update Progress Notes
+
+After Phase 0 completes, update `.claude/memories/progress-notes.md`:
+
+```markdown
+# Progress Notes: [Project Name]
+
+**Last Updated:** [current date/time]
+**Current Phase:** Phase 0 Complete
+
+## Session Summary
+
+Framework initialized for [PROJECT_NAME].
+
+## Completed
+
+- [x] Phase 0: Framework Setup
+  - .claude/ structure created
+  - CLAUDE.md customized with project details
+  - Memories structure initialized
+  - Reference document templates ready
+
+## In Progress
+
+- [ ] Phase 1: Requirements Discovery (next)
+
+## Next Steps
+
+1. Gather requirements via @analyst
+2. Create PRD via @project-manager
+3. Continue to architecture and feature planning
+```
+
+### 0.8 Phase 0 Checkpoint
 
 Display checkpoint:
 ```
@@ -175,6 +208,7 @@ Display checkpoint:
 ✅ CLAUDE.md customized
 ✅ Memories initialized
 ✅ Reference templates ready
+✅ Progress notes updated
 
 **Next: Phase 1 - Requirements Discovery**
 
@@ -215,12 +249,38 @@ Questions to gather:
 - Save PRD to: `docs/prd.md`
 - This becomes a **Tier 2 master document**
 
-### 1.4 Checkpoint
+### 1.4 Update Progress Notes
+
+Append to `.claude/memories/progress-notes.md`:
+
+```markdown
+## Phase 1 Complete: [current date/time]
+
+- [x] Phase 1: Requirements Discovery
+  - @analyst gathered requirements
+  - @project-manager created PRD
+  - PRD saved to docs/prd.md
+  - [X] user stories identified
+  - [Key features listed]
+
+## In Progress
+
+- [ ] Phase 2: Architecture & Standards (next)
+
+## Next Steps
+
+1. Create ADRs via @architect
+2. Populate reference documents
+3. Continue to feature planning
+```
+
+### 1.5 Checkpoint
 
 ```
 ## Phase 1 Complete: PRD Created
 
 📄 docs/prd.md created
+✅ Progress notes updated
 
 **Summary:**
 - [X user stories identified]
@@ -264,7 +324,34 @@ Update the reference templates with project-specific content:
 - ADRs in: `.claude/reference/06-architecture-decisions.md`
 - Reference docs populated with project specifics
 
-### 2.5 Checkpoint
+### 2.5 Update Progress Notes
+
+Append to `.claude/memories/progress-notes.md`:
+
+```markdown
+## Phase 2 Complete: [current date/time]
+
+- [x] Phase 2: Architecture & Standards
+  - @architect created ADRs
+  - Reference documents populated
+  - ADRs saved to .claude/reference/06-architecture-decisions.md
+  - Key decisions:
+    - ADR-001: [decision]
+    - ADR-002: [decision]
+    - ...
+
+## In Progress
+
+- [ ] Phase 3: Feature Planning (next)
+
+## Next Steps
+
+1. Break PRD into features via @scrum-master
+2. Map features to 20 categories
+3. Create feature tracking (markdown or database)
+```
+
+### 2.6 Checkpoint
 
 ```
 ## Phase 2 Complete: Architecture Documented
@@ -275,6 +362,7 @@ Update the reference templates with project-specific content:
 - ...
 
 📚 Reference docs updated
+✅ Progress notes updated
 
 Review architecture decisions and continue to Feature Planning?
 ```
@@ -311,7 +399,74 @@ Map each feature to one of 20 categories (see `FEATURE-CATEGORIES.md`):
 - Each feature marked `passes: false`
 - Ready for `/implement-features` automation
 
-### 3.4 Checkpoint
+### 3.4 Update Progress Notes
+
+Append to `.claude/memories/progress-notes.md`:
+
+```markdown
+## Phase 3 Complete: [current date/time]
+
+- [x] Phase 3: Feature Planning
+  - @scrum-master broke PRD into features
+  - [X] epics identified
+  - [Y] user stories created
+  - [Z] individual features mapped
+  - Features mapped to [N] categories
+  - Output: [docs/feature-breakdown.md | features.db]
+
+## Project Status
+
+**Initialization Complete** (Phases 0-3)
+
+- PRD: docs/prd.md
+- ADRs: .claude/reference/06-architecture-decisions.md
+- Features: [docs/feature-breakdown.md | features.db]
+
+## Ready For
+
+[If not autonomous]:
+- Manual development using /new-feature, /fix-bug, etc.
+- Use /reflect resume to continue in future sessions
+
+[If autonomous]:
+- Phase 4: Implementation Readiness
+- Phase 5: Kickoff with /implement-features
+```
+
+### 3.5 Update Latest Session
+
+Also update `.claude/memories/sessions/latest.md` with current state:
+
+```markdown
+# Latest Session
+
+**Date:** [current date/time]
+**Phase Completed:** Phase 3 - Feature Planning
+
+## What Was Done
+
+- Initialized Claude Forge framework
+- Created PRD with [X] user stories
+- Documented [Y] architecture decisions
+- Broke down into [Z] implementable features
+
+## Current State
+
+Project initialization complete. Ready for [manual development | autonomous implementation].
+
+## Key Documents
+
+- PRD: docs/prd.md
+- ADRs: .claude/reference/06-architecture-decisions.md
+- Features: [docs/feature-breakdown.md | features.db]
+
+## Next Steps
+
+[If manual]: Use /new-feature to start implementing features
+[If autonomous]: Continue to Phase 4-5 for MCP setup and kickoff
+```
+
+### 3.6 Checkpoint
 
 ```
 ## Phase 3 Complete: Features Planned
@@ -323,6 +478,8 @@ Map each feature to one of 20 categories (see `FEATURE-CATEGORIES.md`):
 - Mapped to [N] categories
 
 **Feature tracking:** [manual via markdown | automated via database]
+✅ Progress notes updated
+✅ Session state saved
 
 [If not autonomous]: Project ready for development!
 Use /new-feature to implement features one at a time.

@@ -252,7 +252,16 @@ git commit -m "chore: Initialize Claude Forge framework
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
-### 0.6 Phase 0 Checkpoint
+### 0.6 Update Progress Notes
+
+After Phase 0, update `.claude/memories/progress-notes.md` with:
+- Project name and description
+- Phase 0 completion status
+- Next steps (Phase 1)
+
+This ensures `/reflect resume` has context if the workflow is interrupted.
+
+### 0.7 Phase 0 Checkpoint
 
 Display:
 
@@ -263,6 +272,7 @@ Display:
 ✅ CLAUDE.md customized
 ✅ Memories initialized
 ✅ Reference templates ready
+✅ Progress notes updated
 
 **Next: Phase 1 - Requirements Discovery**
 
@@ -303,12 +313,20 @@ Use Task tool to invoke project-manager agent to create PRD.
 - Save PRD to: `docs/prd.md`
 - This becomes a **Tier 2 master document**
 
-### 1.4 Checkpoint
+### 1.4 Update Progress Notes
+
+Append to `.claude/memories/progress-notes.md`:
+- Phase 1 completion with PRD summary
+- Number of user stories identified
+- Next steps (Phase 2)
+
+### 1.5 Checkpoint
 
 ```
 ## Phase 1 Complete: PRD Created
 
 📄 docs/prd.md created
+✅ Progress notes updated
 
 **Summary:**
 - [X user stories identified]
@@ -352,7 +370,14 @@ Update the reference docs with project-specific content:
 - ADRs in: `.claude/reference/06-architecture-decisions.md`
 - Reference docs populated with project specifics
 
-### 2.5 Checkpoint
+### 2.5 Update Progress Notes
+
+Append to `.claude/memories/progress-notes.md`:
+- Phase 2 completion with ADR summary
+- Key architecture decisions made
+- Next steps (Phase 3)
+
+### 2.6 Checkpoint
 
 ```
 ## Phase 2 Complete: Architecture Documented
@@ -363,6 +388,7 @@ Update the reference docs with project-specific content:
 - ...
 
 📚 Reference docs updated
+✅ Progress notes updated
 
 Review architecture decisions and continue to Feature Planning?
 ```
@@ -415,7 +441,26 @@ Map each feature to one of 20 categories (see `.claude/skills/new-project/FEATUR
 - Each feature marked `passes: false`
 - Ready for `/implement-features` automation
 
-### 3.4 Checkpoint
+### 3.4 Update Progress Notes
+
+Append to `.claude/memories/progress-notes.md`:
+- Phase 3 completion with feature summary
+- Number of epics, stories, and features
+- Project status (initialization complete)
+- What's ready for (manual dev or autonomous)
+
+### 3.5 Update Latest Session
+
+Update `.claude/memories/sessions/latest.md` with:
+- Current date/time
+- What was accomplished (Phases 0-3)
+- Current project state
+- Key documents created
+- Next steps
+
+This ensures `/reflect resume` can pick up where initialization left off.
+
+### 3.6 Checkpoint
 
 ```
 ## Phase 3 Complete: Features Planned
@@ -427,6 +472,8 @@ Map each feature to one of 20 categories (see `.claude/skills/new-project/FEATUR
 - Mapped to [N] categories
 
 **Feature tracking:** [manual via markdown | automated via database]
+✅ Progress notes updated
+✅ Session state saved
 
 [If not autonomous]:
 Project ready for development!
