@@ -44,21 +44,25 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 
 ## Quick Start
 
-### Option A: New Project (Recommended)
+### New Project
+
+Start a brand new project with Claude Forge:
 
 ```bash
 # 1. Create your project directory
-mkdir my-new-project
-cd my-new-project
+mkdir my-new-project && cd my-new-project
 
-# 2. Clone Claude Forge into .claude directory
+# 2. Clone Claude Forge as your .claude directory
 git clone https://github.com/rynhardt81/claude-forge.git .claude
-
-# 3. Remove the .git from .claude (it's now part of your project)
 rm -rf .claude/.git
 
-# 4. Initialize the project with Claude Code
-/new-project
+# 3. Start Claude Code and initialize
+claude
+```
+
+Then run in Claude Code:
+```
+/new-project "My awesome e-commerce app"
 ```
 
 The `/new-project` command runs a **continuous workflow**:
@@ -70,32 +74,32 @@ The `/new-project` command runs a **continuous workflow**:
 | 2 | Architecture & standards | ADRs, populated reference docs |
 | 3 | Task planning | `docs/epics/`, `docs/tasks/registry.json` |
 
-Or provide details inline:
-```bash
-/new-project "My awesome e-commerce app using Next.js"
-```
-
 After initialization, start working:
-```bash
+```
 /reflect status --ready   # See available tasks
 /reflect resume T001      # Start first task
 ```
 
-### Option B: Existing Project
+---
 
-Add Claude Forge to an existing codebase:
+### Existing Project (No Previous Claude Config)
+
+Add Claude Forge to an existing codebase that doesn't have a `.claude` directory:
 
 ```bash
-# 1. Navigate to your project root
+# 1. Navigate to your project
 cd /path/to/existing-project
 
-# 2. Clone Claude Forge into .claude directory
+# 2. Clone Claude Forge as .claude
 git clone https://github.com/rynhardt81/claude-forge.git .claude
-
-# 3. Remove the .git from .claude
 rm -rf .claude/.git
 
-# 4. Initialize with --current flag
+# 3. Start Claude Code
+claude
+```
+
+Then run in Claude Code:
+```
 /new-project --current
 ```
 
@@ -105,11 +109,64 @@ The `--current` flag analyzes your existing codebase:
 - **Presents findings** for your confirmation before proceeding
 - **Creates** PRD, architecture docs, and task breakdown based on existing code
 
-### Option C: Autonomous Development
+---
+
+### Existing Project (Migrating from Previous Claude Config)
+
+If your project already has a `.claude` directory with previous configuration:
+
+**Option 1: Using Migration Script (Recommended)**
+
+```bash
+# 1. Clone Claude Forge to any location
+git clone https://github.com/rynhardt81/claude-forge.git
+cd claude-forge
+
+# 2. Run the migration script
+./scripts/migrate.sh              # macOS/Linux
+# or
+.\scripts\migrate.ps1             # Windows PowerShell
+
+# 3. Follow prompts - enter your project path
+# The script will:
+#   - Backup your existing .claude/ to .claude_old/
+#   - Install Claude Forge to your project's .claude/
+#   - Create a restoration script for rollback
+
+# 4. Start Claude Code in your project
+cd /path/to/your-project
+claude
+```
+
+Then run in Claude Code:
+```
+/migrate
+```
+
+The `/migrate` skill:
+- Merges your old configuration (memories, settings, project docs)
+- Runs brownfield analysis to fill documentation gaps
+- Creates missing PRD, ADRs, and task registry
+- Preserves your project history
+
+**Option 2: Manual Migration**
+
+```bash
+cd /path/to/existing-project
+mv .claude .claude_old
+git clone https://github.com/rynhardt81/claude-forge.git .claude
+rm -rf .claude/.git
+claude
+# Then run: /migrate
+```
+
+---
+
+### Autonomous Development
 
 For full autonomous implementation from idea to code:
 
-```bash
+```
 /new-project "E-commerce platform for handmade crafts" --autonomous
 ```
 
@@ -119,15 +176,17 @@ This runs Phases 0-5:
 - Phase 5: Kickoff with `/implement-features`
 
 Combine with existing project:
-```bash
+```
 /new-project --current --autonomous
 ```
 
-### Option D: Minimal Setup
+---
+
+### Minimal Setup
 
 Framework setup only (skip documentation):
 
-```bash
+```
 /new-project --minimal
 ```
 
@@ -238,6 +297,8 @@ Tasks are locked when an agent starts work:
 | `/new-project --current` | Analyze existing codebase first |
 | `/new-project --autonomous` | Add feature database for automation |
 | `/new-project --minimal` | Framework setup only |
+| `/migrate` | Migrate existing project to Claude Forge |
+| `/migrate --skip-analysis` | Migrate without brownfield analysis |
 | `/implement-features` | Implement features (autonomous mode) |
 | `/implement-features --mode=yolo` | Fast mode (lint only) |
 | `/implement-features --resume` | Resume from last session |
@@ -275,14 +336,60 @@ Tasks are locked when an agent starts work:
 
 ## Setup Guide
 
-### Step 1: Copy Framework
+### Option A: New Project Setup
 
-After cloning, your project structure:
+```bash
+# Create project and clone framework
+mkdir my-project && cd my-project
+git clone https://github.com/rynhardt81/claude-forge.git .claude
+rm -rf .claude/.git
+
+# Start Claude Code and initialize
+claude
+# Run: /new-project "My project description"
+```
+
+### Option B: Existing Project Setup
+
+```bash
+# Navigate to your project
+cd /path/to/existing-project
+
+# Clone framework
+git clone https://github.com/rynhardt81/claude-forge.git .claude
+rm -rf .claude/.git
+
+# Start Claude Code and analyze codebase
+claude
+# Run: /new-project --current
+```
+
+### Option C: Migration from Previous Claude Config
+
+Use the migration scripts if your project already has a `.claude` directory:
+
+```bash
+# Clone framework to a temporary location
+git clone https://github.com/rynhardt81/claude-forge.git
+cd claude-forge
+
+# Run migration script
+./scripts/migrate.sh              # macOS/Linux
+.\scripts\migrate.ps1             # Windows
+
+# Follow prompts, then start Claude Code in your project
+cd /path/to/your-project
+claude
+# Run: /migrate
+```
+
+### Project Structure After Setup
 
 ```
 your-project/
 ├── .claude/                    # Claude Forge framework
 │   ├── CLAUDE.md               # Your project's Claude instructions
+│   ├── scripts/                # Migration scripts
 │   ├── agents/                 # Agent personas
 │   ├── skills/                 # Workflow skills
 │   ├── templates/              # Document templates
@@ -291,7 +398,7 @@ your-project/
 │   ├── mcp-servers/            # MCP server implementations
 │   ├── memories/               # Session continuity
 │   └── ...
-├── docs/                       # Project documentation
+├── docs/                       # Project documentation (created by /new-project)
 │   ├── prd.md                  # Product requirements
 │   ├── tasks/                  # Task registry
 │   └── epics/                  # Epic and task files
@@ -299,23 +406,17 @@ your-project/
 └── ...
 ```
 
-### Step 2: Initialize with /new-project
+### What /new-project Does
 
-The recommended approach is to use `/new-project`:
-
-```bash
-/new-project "My project description"
-```
-
-This automatically:
+The `/new-project` command automatically:
 1. Creates `.claude/CLAUDE.md` with your project details
-2. Initializes memory structure
+2. Initializes memory structure with session tracking
 3. Copies reference templates
 4. Creates PRD through requirements discovery
 5. Creates ADRs through architecture planning
 6. Creates epic/task structure for development
 
-### Step 3: Manual Setup (Alternative)
+### Manual Setup (Alternative)
 
 If you prefer manual setup:
 
@@ -327,7 +428,8 @@ cp .claude/templates/CLAUDE.template.md .claude/CLAUDE.md
 
 **Initialize memories:**
 ```bash
-mkdir -p .claude/memories/sessions
+mkdir -p .claude/memories/sessions/active
+mkdir -p .claude/memories/sessions/completed
 echo "No previous session recorded." > .claude/memories/sessions/latest.md
 echo "# General Memories" > .claude/memories/general.md
 echo "# Progress Notes" > .claude/memories/progress-notes.md
@@ -348,6 +450,10 @@ done
 ```
 .claude/
 ├── CLAUDE.md                    # Project instructions
+│
+├── scripts/                     # Setup & migration scripts
+│   ├── migrate.sh               # Unix/Mac migration script
+│   └── migrate.ps1              # Windows PowerShell migration script
 │
 ├── agents/                      # Full agent personas
 │   ├── orchestrator.md          # Workflow coordination
@@ -370,6 +476,11 @@ done
 │   │   ├── SKILL.md             # Phase workflow
 │   │   ├── PHASES.md            # Detailed phase instructions
 │   │   └── FEATURE-CATEGORIES.md # 20 categories
+│   ├── migrate/                 # Framework migration
+│   │   ├── SKILL.md             # Migration workflow
+│   │   ├── PHASES.md            # Phase instructions
+│   │   ├── MERGE-RULES.md       # Content migration rules
+│   │   └── CHECKPOINTS.md       # User confirmation points
 │   ├── implement-features/      # Autonomous implementation
 │   ├── pdf/                     # PDF processing
 │   └── ...
@@ -382,11 +493,13 @@ done
 │   ├── task-registry.json       # Registry template
 │   ├── config.json              # Config template
 │   ├── adr-template.md          # Architecture Decision
+│   ├── session.md               # Session file template
 │   └── ...
 │
 ├── reference/                   # Architecture doc templates
 │   ├── 00-documentation-governance.md
 │   ├── 01-system-overview.template.md
+│   ├── 10-parallel-sessions.md  # Parallel session coordination
 │   └── ...
 │
 ├── security/                    # Security model
@@ -400,9 +513,11 @@ done
 │
 ├── memories/                    # Session continuity
 │   ├── general.md               # General preferences
-│   ├── progress-notes.md        # Session summaries
+│   ├── progress-notes.md        # Session summaries (append-only)
 │   └── sessions/
-│       └── latest.md            # Most recent session
+│       ├── active/              # Currently running sessions
+│       ├── completed/           # Archived sessions
+│       └── latest.md            # Most recent session pointer
 │
 └── commands/                    # Command definitions
     ├── new-project.md           # /new-project definition
@@ -434,6 +549,7 @@ docs/                            # Project documentation (created by /new-projec
 | Resume | `/reflect resume` | Load previous session context |
 | Status | `/reflect status` | View task/epic status |
 | New Project | `/new-project` | Initialize project |
+| Migrate | `/migrate` | Migrate existing project to Claude Forge |
 | Implement | `/implement-features` | Autonomous feature loop |
 | PDF | `/pdf <command>` | PDF processing tasks |
 
@@ -568,8 +684,21 @@ ls docs/tasks/registry.json
 
 ## Version
 
-**Framework Version:** 1.2.0
-**Last Updated:** 2026-01-09
+**Framework Version:** 1.3.0
+**Last Updated:** 2026-01-11
+
+### Changelog
+
+**v1.3.0** (2026-01-11)
+- Added `/migrate` skill for migrating existing projects to Claude Forge
+- Added `scripts/migrate.sh` and `scripts/migrate.ps1` for automated setup
+- Added parallel session support with conflict detection
+- Improved session management with active/completed directories
+
+**v1.2.0** (2026-01-09)
+- Added epic/task dependency system with parallel work support
+- Added progress tracking at each phase checkpoint
+- Improved session continuity with structured session files
 
 ---
 
