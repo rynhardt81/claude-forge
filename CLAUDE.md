@@ -210,6 +210,8 @@ The file `.claude/memories/progress-notes.md`:
 | `/new-project --current` | Same, but analyzes existing codebase first |
 | `/new-project --autonomous` | Add feature database for automated implementation |
 | `/new-project --minimal` | Framework setup only (skip documentation) |
+| `/migrate` | Migrate existing project to Claude Forge framework |
+| `/migrate --skip-analysis` | Migrate without running brownfield analysis |
 | `/reflect` | Capture session learnings and context |
 | `/reflect resume` | Resume from last session with full context |
 | `/reflect resume E01` | Resume specific epic |
@@ -494,6 +496,7 @@ Invoke with `@agent-name`:
 |-------|---------|
 | `/reflect` | Session management and continuity |
 | `/new-project` | Project initialization |
+| `/migrate` | Migrate existing project to Claude Forge |
 | `/new-feature` | Feature development workflow |
 | `/fix-bug` | Bug fixing workflow |
 | `/refactor` | Code refactoring workflow |
