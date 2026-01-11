@@ -9,6 +9,9 @@ memories/.session-skills
 memories/.reflect-status
 memories/.reflect-config.json
 
+# Project docs directory (created per-project, not part of framework)
+docs/
+
 # OS files
 .DS_Store
 Thumbs.db
