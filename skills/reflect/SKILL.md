@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: Self-improving skill that extracts preferences and corrections to update skills, captures session context for continuity, and manages task/epic workflow. Use /reflect to manually trigger, /reflect resume to continue from last session, or /reflect status to see task progress.
+description: Self-improving skill that extracts preferences and corrections to update skills, captures session context for continuity, manages task/epic workflow, and coordinates parallel sessions. Use /reflect to manually trigger, /reflect resume to continue from last session, or /reflect status to see task progress.
 ---
 
 # Reflect Skill
@@ -9,7 +9,8 @@ description: Self-improving skill that extracts preferences and corrections to u
 
 1. **Session Continuity:** Resume work seamlessly with context
 2. **Task Management:** Track epics, tasks, and dependencies
-3. **Skill Improvement:** Extract learnings to make skills better over time
+3. **Parallel Session Coordination:** Prevent conflicts between concurrent sessions
+4. **Skill Improvement:** Extract learnings to make skills better over time
 
 ## Commands Overview
 
@@ -22,11 +23,41 @@ description: Self-improving skill that extracts preferences and corrections to u
 | `/reflect status` | Show task/epic status overview |
 | `/reflect status --locked` | Show only locked tasks |
 | `/reflect status --ready` | Show tasks ready to work on |
+| `/reflect status --sessions` | Show active parallel sessions |
 | `/reflect unlock T002` | Force unlock a stale task |
+| `/reflect cleanup` | Clean up stale sessions |
 | `/reflect config` | Show current configuration |
 | `/reflect config <key> <value>` | Update configuration |
 | `/reflect on` | Enable auto-reflection at session end |
 | `/reflect off` | Disable auto-reflection |
+
+---
+
+## CRITICAL: Session Start Protocol
+
+**Before doing ANY work, you MUST complete the session start protocol.**
+
+This is not optional. This is not negotiable. See CLAUDE.md for full details.
+
+### Quick Reference
+
+```
+1. Generate Session ID: {YYYYMMDD-HHMMSS}-{4-random}
+2. Create Session File: .claude/memories/sessions/active/session-{id}.md
+3. Declare Scope: branch, directories, features
+4. Scan for Conflicts: read all files in active/
+5. Load Context: progress-notes.md, completed sessions, registry
+6. Proceed (only if no blocking conflicts)
+```
+
+### Conflict Resolution
+
+| Conflict | Action |
+|----------|--------|
+| Same branch | **BLOCK** - Cannot proceed |
+| Same directory | **WARN** - User must confirm |
+| Same file | **ASK** - User decides priority |
+| Merge/PR | **QUEUE** - Wait for first to complete |
 
 ---
 
@@ -38,7 +69,14 @@ Resume from last session with full context.
 
 **Flow:**
 
-1. **Gather Context from All Sources**
+1. **Complete Session Start Protocol First**
+   - Generate session ID
+   - Create session file
+   - Declare scope based on what you'll be resuming
+   - Scan for conflicts
+   - Only then proceed to gather context
+
+2. **Gather Context from All Sources**
 
 ```bash
 # 1. Recent git history (last 20 commits)
@@ -51,21 +89,26 @@ git diff --stat
 git status --short
 ```
 
-2. **Read Memory Files**
+3. **Read Memory Files**
    - `.claude/memories/sessions/latest.md` - Last session state
-   - `.claude/memories/progress-notes.md` - Ongoing work summary
+   - `.claude/memories/progress-notes.md` - Ongoing work summary (append-only)
    - `.claude/memories/general.md` - Project preferences
+   - `.claude/memories/sessions/completed/` - Recent completed sessions
 
-3. **Read Task Registry**
+4. **Read Task Registry**
    - `docs/tasks/registry.json` - Task/epic status and dependencies
    - Identify tasks with status `in_progress` or `continuation`
 
-4. **Present Combined Context**
+5. **Present Combined Context**
 
 ```markdown
 ## Session Resume
 
+**Session ID:** {your-new-session-id}
 **Last Session:** [date from latest.md]
+
+### Active Sessions
+[List any other active sessions from active/]
 
 ### Recent Git Activity (last 20 commits)
 [output from git log --oneline -20]
@@ -89,7 +132,7 @@ git status --short
 - **Next steps:** [list]
 ```
 
-5. **Confirm and Continue**
+6. **Confirm and Continue**
    - Ask: "Continue from here?"
    - If yes, load context and proceed with incomplete tasks
 
@@ -101,24 +144,28 @@ Resume a specific epic.
 
 **Flow:**
 
-1. **Load Epic File**
+1. **Complete Session Start Protocol**
+   - Declare scope to include the epic's directories
+
+2. **Load Epic File**
    - Read `docs/epics/E01-*/E01-*.md`
    - Check epic status (must be `in_progress` or has incomplete tasks)
 
-2. **Load Minimal Context**
+3. **Load Minimal Context**
    - Epic summary and scope
    - Task list with status
    - Dependencies and blockers
 
-3. **Identify Next Task**
+4. **Identify Next Task**
    - Find first task with status `ready` or `continuation`
    - Load that task's context
 
-4. **Present Epic Context**
+5. **Present Epic Context**
 
 ```markdown
 ## Resuming Epic E01: [Epic Name]
 
+**Session ID:** {your-session-id}
 **Status:** in_progress
 **Progress:** 3/8 tasks completed
 
@@ -146,30 +193,34 @@ Resume a specific task.
 
 **Flow:**
 
-1. **Validate Task**
+1. **Complete Session Start Protocol**
+   - Declare scope to include the task's files
+
+2. **Validate Task**
    - Read task file from registry path
    - Check status is `ready`, `in_progress`, or `continuation`
    - Verify dependencies are met
 
-2. **Check Lock Status**
+3. **Check Lock Status**
    - If locked by another session and not stale, warn user
    - If stale lock (> lockTimeout), offer to unlock
 
-3. **Load Minimal Context**
+4. **Load Minimal Context**
    - Task objective and requirements
    - Continuation context (if status is `continuation`)
    - Files to modify
    - Acceptance criteria
 
-4. **Acquire Lock**
+5. **Acquire Lock**
    - Set task status to `in_progress`
    - Record session ID and timestamp in lock
 
-5. **Present Task Context**
+6. **Present Task Context**
 
 ```markdown
 ## Resuming Task T002: [Task Name]
 
+**Session ID:** {your-session-id}
 **Epic:** E01 - [Epic Name]
 **Status:** continuation → in_progress (locked)
 
@@ -202,7 +253,7 @@ Ready to continue?
 
 ### `/reflect status`
 
-Show overview of all epics and tasks.
+Show overview of all epics, tasks, and active sessions.
 
 **Output:**
 
@@ -211,6 +262,13 @@ Show overview of all epics and tasks.
 
 **Epics:** 4 total (1 completed, 2 in_progress, 1 pending)
 **Tasks:** 32 total (12 completed, 2 in_progress, 8 ready, 10 pending)
+**Active Sessions:** 2
+
+### Active Sessions
+| Session ID | Branch | Scope | Started |
+|------------|--------|-------|---------|
+| 20240115-143022-a7x9 | feature/auth | src/auth/ | 2h ago |
+| 20240115-150045-k2m3 | feature/dashboard | src/dashboard/ | 30m ago |
 
 ### Epic Overview
 | ID | Name | Status | Progress |
@@ -231,6 +289,40 @@ Show overview of all epics and tasks.
 | ID | Name | Locked By | Since |
 |----|------|-----------|-------|
 | T014 | Dashboard layout | session-abc | 2h ago |
+```
+
+---
+
+### `/reflect status --sessions`
+
+Show detailed information about active parallel sessions.
+
+**Output:**
+
+```markdown
+## Active Sessions
+
+| Session ID | Branch | Scope | Started | Status |
+|------------|--------|-------|---------|--------|
+| 20240115-143022-a7x9 | feature/auth | src/auth/, src/middleware/ | 2h ago | active |
+| 20240115-150045-k2m3 | feature/dashboard | src/dashboard/ | 30m ago | active |
+
+### Session Details
+
+#### 20240115-143022-a7x9
+**Branch:** feature/auth
+**Directories:** src/auth/, src/middleware/
+**Working On:** Implement JWT validation
+**Commits:** 3
+
+#### 20240115-150045-k2m3
+**Branch:** feature/dashboard
+**Directories:** src/dashboard/
+**Working On:** Dashboard layout component
+**Commits:** 1
+
+### Potential Conflicts
+None detected.
 ```
 
 ---
@@ -271,6 +363,42 @@ Show tasks ready to work on (all dependencies met, not locked).
 
 Use `/reflect resume T015` to start working on a task.
 ```
+
+---
+
+## Cleanup Commands
+
+### `/reflect cleanup`
+
+Clean up stale sessions from the active directory.
+
+**Flow:**
+
+1. **Scan Active Sessions**
+   - List all files in `.claude/memories/sessions/active/`
+   - Parse timestamps from session IDs
+
+2. **Identify Stale Sessions**
+   - Sessions older than `sessionStaleTimeout` (default: 24h)
+
+3. **Present Stale Sessions**
+
+```markdown
+## Stale Sessions Found
+
+| Session ID | Started | Age | Branch |
+|------------|---------|-----|--------|
+| 20240114-093022-b2k4 | 2024-01-14 09:30 | 29h | feature/old |
+
+Clean up these sessions?
+- Move to completed/ with status "abandoned"
+- Append summary to progress-notes.md
+```
+
+4. **On Confirmation**
+   - Update each session file's status to `abandoned`
+   - Move from `active/` to `completed/`
+   - Append summary to `progress-notes.md`
 
 ---
 
@@ -334,6 +462,85 @@ The task is now available. Resume with `/reflect resume T002`.
 
 ---
 
+## Session End Protocol
+
+When ending a session (either `/reflect` or natural completion):
+
+### 1. Update Session File
+
+```markdown
+# Session {id}
+
+**Started**: 2024-01-15 14:30
+**Ended**: 2024-01-15 16:45
+**Branch**: feature/auth
+**Scope**: src/auth/, src/middleware/
+**Status**: completed
+**Duration**: 2h 15m
+
+## Completed
+- [x] Implement login endpoint (commit: abc123)
+- [x] Add JWT validation (commit: def456)
+- [x] Write auth tests (commit: ghi789)
+
+## Handoff Notes
+- Registration endpoint ready to implement next
+- Rate limiting should be added to auth routes
+```
+
+### 2. Move Session File
+
+```bash
+mv .claude/memories/sessions/active/session-{id}.md \
+   .claude/memories/sessions/completed/session-{id}.md
+```
+
+### 3. Append to Progress Notes
+
+**CRITICAL: APPEND ONLY. Never overwrite existing content.**
+
+```markdown
+---
+### Session {id} - 2024-01-15 14:30
+**Branch**: feature/auth
+**Scope**: src/auth/, src/middleware/
+**Status**: completed
+**Duration**: 2h 15m
+
+**Completed**:
+- Implement login endpoint (commit: abc123)
+- Add JWT validation (commit: def456)
+- Write auth tests (commit: ghi789)
+
+**Key Decisions**:
+- Chose JWT over sessions for statelessness
+
+**Handoff**:
+- Registration endpoint ready to implement
+- Add rate limiting to auth routes
+---
+```
+
+### 4. Update latest.md
+
+**Only if no other active sessions exist:**
+
+```markdown
+# Latest Session
+
+**Session ID**: {id}
+**Completed**: 2024-01-15 16:45
+
+See `completed/session-{id}.md` for full details.
+
+## Quick Summary
+- Branch: feature/auth
+- Completed 3 tasks
+- Ready for: registration endpoint
+```
+
+---
+
 ## Config Commands
 
 ### `/reflect config`
@@ -348,7 +555,7 @@ Show current configuration.
 ### Task Management
 | Setting | Value | Description |
 |---------|-------|-------------|
-| lockTimeout | 3600 | Seconds before lock is stale |
+| lockTimeout | 3600 | Seconds before task lock is stale |
 | allowManualUnlock | true | Allow /reflect unlock |
 | maxParallelAgents | 3 | Max concurrent task locks |
 | autoAssignNextTask | true | Auto-suggest next task |
@@ -356,6 +563,7 @@ Show current configuration.
 ### Session Management
 | Setting | Value | Description |
 |---------|-------|-------------|
+| sessionStaleTimeout | 86400 | Seconds before session is stale (24h) |
 | maxContextTokens | 200000 | Total context budget |
 | targetResumeTokens | 8000 | Target for resume context |
 | warningThreshold | 150000 | Warn when context exceeds |
@@ -376,36 +584,10 @@ Update a configuration setting.
 **Examples:**
 
 ```
-/reflect config lockTimeout 1800        # 30 minute lock timeout
-/reflect config maxParallelAgents 5     # Allow 5 concurrent workers
+/reflect config lockTimeout 1800           # 30 minute lock timeout
+/reflect config sessionStaleTimeout 43200  # 12 hour session timeout
+/reflect config maxParallelAgents 5        # Allow 5 concurrent workers
 /reflect config autoAssignNextTask false
-```
-
-**Flow:**
-
-1. **Validate Key**
-   - Must be a known configuration key
-   - Unknown keys: "Unknown config key: [key]"
-
-2. **Validate Value**
-   - Type check (number, boolean, string)
-   - Range check where applicable
-   - Invalid: "Invalid value for [key]: [reason]"
-
-3. **Update Config**
-   - Update `docs/tasks/config.json`
-   - Also update registry settings if applicable
-
-4. **Confirm**
-
-```markdown
-## Configuration Updated
-
-**Setting:** lockTimeout
-**Old Value:** 3600
-**New Value:** 1800
-
-Configuration saved to docs/tasks/config.json
 ```
 
 ---
@@ -414,11 +596,11 @@ Configuration saved to docs/tasks/config.json
 
 When `/reflect` is called without arguments:
 
-1. Scan current conversation for learning signals (see [SIGNALS.md](SIGNALS.md))
-2. Identify skills used during session
-3. Categorize findings by confidence (High/Medium/Low)
-4. Match learnings to relevant skills or general memories
-5. Capture session context using [SESSION-TEMPLATE.md](SESSION-TEMPLATE.md)
+1. **Complete Session End Protocol** (see above)
+2. Scan current conversation for learning signals (see [SIGNALS.md](SIGNALS.md))
+3. Identify skills used during session
+4. Categorize findings by confidence (High/Medium/Low)
+5. Match learnings to relevant skills or general memories
 6. Present batch review of proposed changes (see [CHECKPOINTS.md](CHECKPOINTS.md))
 7. On approval, update files per [UPDATE-RULES.md](UPDATE-RULES.md)
 8. Commit changes with descriptive message
@@ -443,10 +625,16 @@ When enabled (`/reflect on`) and session ends:
 .claude/
 ├── memories/
 │   ├── general.md              # General preferences
-│   ├── progress-notes.md       # Session summaries
+│   ├── progress-notes.md       # Append-only session log
 │   ├── sessions/
-│   │   ├── latest.md           # Most recent session
-│   │   └── YYYY-MM-DD.md       # Date-stamped sessions
+│   │   ├── active/             # Currently running sessions
+│   │   │   ├── .gitkeep
+│   │   │   └── session-{id}.md
+│   │   ├── completed/          # Archived sessions
+│   │   │   ├── .gitkeep
+│   │   │   └── session-{id}.md
+│   │   ├── latest.md           # Most recent completed
+│   │   └── README.md
 │   ├── .reflect-status         # on/off toggle
 │   ├── .reflect-config.json    # Reflection config
 │   └── .session-skills         # Skills used (temp)
@@ -512,10 +700,11 @@ docs/
 
 ## Key Rules
 
+- **Session Protocol First:** Never skip the session start protocol
 - **Minimal Context Loading:** Only load what's needed for the specific task/epic
 - **Lock Management:** Always acquire lock before starting, release on completion
 - **Continuation Context:** When stopping mid-task, populate continuation section
-- **Never Overwrite:** Append to existing skill content, don't replace
+- **Append Only:** Never overwrite progress-notes.md, always append
 - **Always Commit:** Commit updates with clear messages
 - **Deduplicate:** Check for existing learnings before adding
 - **Flag Conflicts:** Surface conflicts for manual review

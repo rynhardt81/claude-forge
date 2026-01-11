@@ -1,0 +1,44 @@
+# Claude Forge Framework .gitignore
+
+# Session files (transient, may contain sensitive context)
+memories/sessions/active/session-*.md
+memories/sessions/completed/session-*.md
+
+# Temporary files
+memories/.session-skills
+memories/.reflect-status
+memories/.reflect-config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Node modules (if any MCP servers use npm)
+node_modules/
+
+# Python (if any scripts use Python)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.*.local
