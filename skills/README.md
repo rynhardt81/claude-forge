@@ -532,6 +532,114 @@ All skills integrate with the Claude Forge framework:
 
 ---
 
+## Recommended Plugins (For Full Functionality)
+
+The following plugins are **recommended for full Claude Forge functionality**. Some framework skills directly invoke these plugins:
+
+### Superpowers Plugin (Recommended)
+
+**Used by:** `/new-feature`, `/fix-bug` skills
+
+The Superpowers plugin provides workflow skills that Claude Forge skills invoke directly:
+
+| Skill | Command | Used By |
+|-------|---------|---------|
+| brainstorming | `/brainstorming` | `/new-feature` (discovery phase) |
+| writing-plans | `/writing-plans` | `/new-feature` (planning phase) |
+| test-driven-development | `/test-driven-development` | `/new-feature` (implementation) |
+| systematic-debugging | `/systematic-debugging` | `/fix-bug` (diagnosis) |
+| verification-before-completion | `/verification-before-completion` | `/new-feature`, `/fix-bug` |
+| requesting-code-review | `/requesting-code-review` | `/new-feature` (completion) |
+| using-git-worktrees | `/using-git-worktrees` | Isolated feature work |
+| dispatching-parallel-agents | `/dispatching-parallel-agents` | Run independent tasks in parallel |
+| executing-plans | `/executing-plans` | Execute plans with review checkpoints |
+| code-reviewer | Agent | Review completed work against plans |
+
+**Without this plugin:** `/new-feature` and `/fix-bug` skills will have reduced functionality. The skills will still work but won't invoke the specialized workflow phases.
+
+### Playwright Plugin (Recommended for Autonomous Mode)
+
+**Used by:** `/implement-features`, Quality Engineer agent, Standard/Hybrid testing modes
+
+Browser automation capabilities via MCP server for feature verification:
+
+- Browser navigation and interaction
+- Screenshot capture
+- Form filling and validation
+- Element inspection
+- End-to-end testing
+
+**Without this plugin:** Autonomous development (`--autonomous` flag) and Standard/Hybrid testing modes will not have browser-based verification. YOLO mode (`--mode=yolo`) works without Playwright.
+
+---
+
+## Optional Plugins
+
+The following plugins are **fully optional** and can enhance your development workflow if desired:
+
+### Frontend Design Plugin
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| frontend-design | `/frontend-design` | Create production-grade UI components |
+
+### Backend Development Plugin
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| backend-architect | Agent | API design and microservices |
+| temporal-python-pro | Agent | Temporal workflow orchestration |
+| tdd-orchestrator | Agent | Test-driven development governance |
+| graphql-architect | Agent | GraphQL schema and performance |
+| api-design-principles | `/api-design-principles` | REST/GraphQL API design |
+| microservices-patterns | `/microservices-patterns` | Distributed systems design |
+| workflow-orchestration-patterns | `/workflow-orchestration-patterns` | Durable workflow design |
+
+### Database Design Plugin
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| database-architect | Agent | Data layer and schema design |
+| sql-pro | Agent | SQL optimization and modeling |
+| postgresql | `/postgresql` | PostgreSQL-specific schema design |
+
+### LLM Application Development Plugin
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| prompt-engineer | Agent | Advanced prompting techniques |
+| ai-engineer | Agent | Production LLM applications |
+| rag-implementation | `/rag-implementation` | Retrieval-augmented generation |
+| embedding-strategies | `/embedding-strategies` | Embedding model selection |
+| langchain-architecture | `/langchain-architecture` | LangChain application design |
+
+### Ralph Loop Plugin
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| ralph-loop | `/ralph-loop` | Start Ralph Loop in session |
+| cancel-ralph | `/cancel-ralph` | Cancel active Ralph Loop |
+
+### Context7 Plugin (MCP)
+
+Documentation lookup via MCP server. Provides:
+- Library documentation retrieval
+- Up-to-date code examples
+- Framework-specific guidance
+
+---
+
+## Installing Plugins
+
+These plugins are installed separately from Claude Forge. Check each plugin's documentation for installation instructions.
+
+**Summary:**
+- **Superpowers** - Recommended for `/new-feature` and `/fix-bug` full functionality
+- **Playwright** - Recommended for autonomous development and browser testing
+- **All others** - Fully optional, install based on your development needs
+
+---
+
 ## See Also
 
 - [CLAUDE.md](../CLAUDE.md) - Framework instructions
