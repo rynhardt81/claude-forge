@@ -11,6 +11,7 @@ description: Self-improving skill that extracts preferences and corrections to u
 2. **Task Management:** Track epics, tasks, and dependencies
 3. **Parallel Session Coordination:** Prevent conflicts between concurrent sessions
 4. **Skill Improvement:** Extract learnings to make skills better over time
+5. **Intelligent Dispatch:** Configure automatic sub-agent parallelization and intent detection
 
 ## Commands Overview
 
@@ -24,10 +25,18 @@ description: Self-improving skill that extracts preferences and corrections to u
 | `/reflect status --locked` | Show only locked tasks |
 | `/reflect status --ready` | Show tasks ready to work on |
 | `/reflect status --sessions` | Show active parallel sessions |
+| `/reflect status --dispatch` | Show dispatch analysis for ready tasks |
 | `/reflect unlock T002` | Force unlock a stale task |
 | `/reflect cleanup` | Clean up stale sessions |
 | `/reflect config` | Show current configuration |
 | `/reflect config <key> <value>` | Update configuration |
+| `/reflect config dispatch` | Show dispatch configuration |
+| `/reflect config intent` | Show intent detection configuration |
+| `/reflect config --preset <name>` | Apply preset (careful/balanced/aggressive) |
+| `/reflect dispatch on` | Enable automatic sub-agent dispatch |
+| `/reflect dispatch off` | Disable automatic sub-agent dispatch |
+| `/reflect intent on` | Enable intent detection |
+| `/reflect intent off` | Disable intent detection |
 | `/reflect on` | Enable auto-reflection at session end |
 | `/reflect off` | Disable auto-reflection |
 
@@ -568,11 +577,23 @@ Show current configuration.
 | targetResumeTokens | 8000 | Target for resume context |
 | warningThreshold | 150000 | Warn when context exceeds |
 
+### Intelligent Dispatch
+| Setting | Value | Description |
+|---------|-------|-------------|
+| dispatch.enabled | true | Automatic sub-agent dispatch |
+| dispatch.mode | automatic | Spawns without confirmation |
+| dispatch.maxParallelAgents | 3 | Max concurrent sub-agents |
+| intentDetection.enabled | true | Natural language intent detection |
+| intentDetection.mode | suggest | Suggests skills, waits for confirm |
+| intentDetection.confidenceThreshold | 0.7 | Min confidence to suggest |
+
 ### Auto-Reflection
 | Setting | Value |
 |---------|-------|
 | enabled | off |
 | approvalMode | batch |
+
+Use `/reflect config dispatch` or `/reflect config intent` for detailed settings.
 ```
 
 ---
@@ -588,6 +609,308 @@ Update a configuration setting.
 /reflect config sessionStaleTimeout 43200  # 12 hour session timeout
 /reflect config maxParallelAgents 5        # Allow 5 concurrent workers
 /reflect config autoAssignNextTask false
+```
+
+---
+
+## Intelligent Dispatch Commands
+
+The Intelligent Dispatch System automatically parallelizes work and detects user intent. These commands configure its behavior.
+
+### `/reflect config dispatch`
+
+Show dispatch configuration.
+
+**Output:**
+
+```markdown
+## Dispatch Configuration
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| enabled | true | Automatic dispatch active |
+| mode | automatic | Spawns agents without confirmation |
+| maxParallelAgents | 3 | Max concurrent sub-agents |
+
+### Trigger Points
+| Trigger | Enabled |
+|---------|---------|
+| onResume | true |
+| onTaskComplete | true |
+| onFeatureComplete | true |
+
+### Task Registry Settings
+| Setting | Value |
+|---------|-------|
+| enabled | true |
+| minReadyTasks | 2 |
+| respectPriority | true |
+| scopeConflictBehavior | skip |
+
+### Feature Database Settings
+| Setting | Value |
+|---------|-------|
+| enabled | true |
+| categoryMatrix | default |
+| regressionStrategy | shared |
+| criticalCategories | A, P |
+```
+
+---
+
+### `/reflect config intent`
+
+Show intent detection configuration.
+
+**Output:**
+
+```markdown
+## Intent Detection Configuration
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| enabled | true | Pattern matching active |
+| mode | suggest | Asks before invoking skill |
+| confidenceThreshold | 0.7 | Minimum confidence to suggest |
+
+### Skill Detection
+| Category | Enabled |
+|----------|---------|
+| framework | true |
+| superpowers | true |
+
+### Excluded Patterns
+- "how do I"
+- "what is"
+- "explain"
+- "show me"
+
+### Statistics (this session)
+| Metric | Value |
+|--------|-------|
+| Suggestions shown | 3 |
+| Suggestions accepted | 2 |
+| Acceptance rate | 66.7% |
+```
+
+---
+
+### `/reflect config --preset <name>`
+
+Apply a preset configuration.
+
+**Available Presets:**
+
+| Preset | Description | Dispatch Mode | Max Agents | Confidence |
+|--------|-------------|---------------|------------|------------|
+| `careful` | New projects | confirm | 2 | 0.8 |
+| `balanced` | Normal use | automatic | 3 | 0.7 |
+| `aggressive` | Large projects | automatic | 5 | 0.6 |
+
+**Example:**
+
+```
+/reflect config --preset balanced
+```
+
+**Output:**
+
+```markdown
+## Applied Preset: balanced
+
+Updated settings:
+- dispatch.mode: automatic
+- dispatch.maxParallelAgents: 3
+- intentDetection.confidenceThreshold: 0.7
+
+Configuration saved to `.claude/memories/.dispatch-config.json`
+```
+
+---
+
+### `/reflect dispatch on`
+
+Enable automatic sub-agent dispatch.
+
+**Flow:**
+
+1. Set `dispatch.enabled = true` in config
+2. Confirm change
+
+**Output:**
+
+```markdown
+## Dispatch Enabled
+
+Automatic sub-agent dispatch is now **enabled**.
+
+When you resume tasks or complete work, the system will:
+- Analyze task dependencies for parallelizable work
+- Spawn sub-agents based on dispatch.mode setting
+- Current mode: automatic (will spawn without confirmation)
+
+Use `/reflect dispatch off` to disable.
+```
+
+---
+
+### `/reflect dispatch off`
+
+Disable automatic sub-agent dispatch.
+
+**Output:**
+
+```markdown
+## Dispatch Disabled
+
+Automatic sub-agent dispatch is now **disabled**.
+
+Tasks will be executed sequentially by the main agent.
+Use `/reflect dispatch on` to re-enable.
+```
+
+---
+
+### `/reflect intent on`
+
+Enable intent detection.
+
+**Output:**
+
+```markdown
+## Intent Detection Enabled
+
+Natural language intent detection is now **enabled**.
+
+When you send a message, the system will:
+- Check for patterns matching known skills
+- Suggest appropriate skill if confidence >= 0.7
+- Wait for your confirmation before invoking
+
+Use `/reflect intent off` to disable.
+```
+
+---
+
+### `/reflect intent off`
+
+Disable intent detection.
+
+**Output:**
+
+```markdown
+## Intent Detection Disabled
+
+Natural language intent detection is now **disabled**.
+
+To invoke skills, use explicit commands:
+- `/new-feature <description>`
+- `/fix-bug <description>`
+- `/refactor <description>`
+- etc.
+
+Use `/reflect intent on` to re-enable.
+```
+
+---
+
+### `/reflect status --dispatch`
+
+Show dispatch analysis for currently ready tasks.
+
+**Output:**
+
+```markdown
+## Dispatch Analysis
+
+### Ready Tasks
+| ID | Name | Priority | Scope | Can Parallelize |
+|----|------|----------|-------|-----------------|
+| T015 | Add chart component | 1 | src/components/charts/ | Yes |
+| T016 | Implement filters | 2 | src/components/filters/ | Yes |
+| T021 | Create report template | 1 | src/reports/ | Yes |
+| T017 | Update chart styles | 3 | src/components/charts/ | No (scope conflict with T015) |
+
+### Parallelization Proposal
+Based on dependency analysis and scope checking:
+
+**Main Agent:**
+- T015: Add chart component (Priority 1)
+
+**Sub-Agent 1:**
+- T016: Implement filters (no scope overlap)
+
+**Sub-Agent 2:**
+- T021: Create report template (no scope overlap)
+
+**Deferred (scope conflict):**
+- T017: Update chart styles (shares scope with T015)
+
+### Configuration
+- Mode: automatic
+- Max agents: 3
+- Would spawn: 2 sub-agents
+
+Start with this plan? [Y/n]
+```
+
+---
+
+### Dispatch Configuration Settings
+
+Update dispatch settings with `/reflect config <key> <value>`:
+
+```
+# Enable/disable dispatch
+/reflect config dispatch.enabled true
+/reflect config dispatch.enabled false
+
+# Set dispatch mode
+/reflect config dispatch.mode automatic    # Spawn without asking
+/reflect config dispatch.mode confirm      # Ask before spawning
+
+# Set max parallel agents
+/reflect config dispatch.maxParallelAgents 5
+
+# Configure trigger points
+/reflect config dispatch.triggerPoints.onResume true
+/reflect config dispatch.triggerPoints.onTaskComplete true
+/reflect config dispatch.triggerPoints.onFeatureComplete false
+
+# Task registry settings
+/reflect config dispatch.taskRegistry.enabled true
+/reflect config dispatch.taskRegistry.minReadyTasks 3
+
+# Feature database settings
+/reflect config dispatch.featureDatabase.regressionStrategy independent
+/reflect config dispatch.featureDatabase.criticalCategories ["A", "P", "L"]
+```
+
+---
+
+### Intent Detection Configuration Settings
+
+Update intent detection settings with `/reflect config <key> <value>`:
+
+```
+# Enable/disable intent detection
+/reflect config intentDetection.enabled true
+/reflect config intentDetection.enabled false
+
+# Set mode
+/reflect config intentDetection.mode suggest   # Suggest and confirm
+/reflect config intentDetection.mode off       # Disable completely
+
+# Set confidence threshold
+/reflect config intentDetection.confidenceThreshold 0.8   # More conservative
+/reflect config intentDetection.confidenceThreshold 0.6   # More suggestions
+
+# Enable/disable skill categories
+/reflect config intentDetection.skills.framework true
+/reflect config intentDetection.skills.superpowers false
+
+# Add exclusion pattern
+/reflect config intentDetection.excludePatterns.add "tell me about"
 ```
 
 ---
@@ -637,6 +960,7 @@ When enabled (`/reflect on`) and session ends:
 │   │   └── README.md
 │   ├── .reflect-status         # on/off toggle
 │   ├── .reflect-config.json    # Reflection config
+│   ├── .dispatch-config.json   # Intelligent dispatch config
 │   └── .session-skills         # Skills used (temp)
 └── skills/
     └── [skill-name]/
