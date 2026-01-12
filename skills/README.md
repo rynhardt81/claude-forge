@@ -25,7 +25,7 @@ Skills are reusable workflows that automate common development tasks. Each skill
 
 ### reflect
 
-**Purpose:** Session management, task tracking, and parallel session coordination.
+**Purpose:** Session management, task tracking, parallel session coordination, and intelligent dispatch configuration.
 
 **Invocation:**
 ```
@@ -37,10 +37,18 @@ Skills are reusable workflows that automate common development tasks. Each skill
 /reflect status --ready       # Show tasks available to work on
 /reflect status --locked      # Show currently locked tasks
 /reflect status --sessions    # Show active parallel sessions
+/reflect status --dispatch    # Show dispatch analysis for ready tasks
 /reflect unlock T002          # Force unlock a stale task
 /reflect cleanup              # Clean up stale sessions
 /reflect config               # Show configuration
+/reflect config dispatch      # Show dispatch configuration
+/reflect config intent        # Show intent detection configuration
 /reflect config <key> <value> # Update setting
+/reflect config --preset <name> # Apply preset (careful, balanced, aggressive)
+/reflect dispatch on          # Enable automatic sub-agent dispatch
+/reflect dispatch off         # Disable automatic sub-agent dispatch
+/reflect intent on            # Enable intent detection
+/reflect intent off           # Disable intent detection
 /reflect on                   # Enable auto-reflection
 /reflect off                  # Disable auto-reflection
 ```
@@ -51,13 +59,15 @@ Skills are reusable workflows that automate common development tasks. Each skill
 | `--ready` | Filter to tasks ready to start |
 | `--locked` | Filter to locked tasks |
 | `--sessions` | Show active parallel sessions |
+| `--dispatch` | Show dispatch analysis for parallelizable tasks |
 
 **When to Use:**
 - Starting a new session (automatic context loading)
 - Resuming work after a break
 - Checking what tasks are available
 - Managing parallel sessions
-- Configuring lock timeouts
+- Configuring dispatch and intent detection
+- Toggling automatic sub-agent dispatch
 
 **Prerequisites:**
 - Project initialized with Claude Forge framework
@@ -70,6 +80,18 @@ Skills are reusable workflows that automate common development tasks. Each skill
 | `allowManualUnlock` | true | Allow `/reflect unlock` |
 | `maxParallelAgents` | 3 | Max concurrent task locks |
 | `autoAssignNextTask` | true | Auto-suggest next task |
+| `dispatch.enabled` | true | Enable automatic sub-agent dispatch |
+| `dispatch.mode` | "automatic" | "automatic" or "confirm" before spawning |
+| `intentDetection.enabled` | true | Enable natural language skill detection |
+| `intentDetection.mode` | "suggest" | "suggest" (always) or "off" |
+| `intentDetection.confidenceThreshold` | 0.7 | Minimum confidence to suggest skill |
+
+**Presets:**
+| Preset | Description | Settings |
+|--------|-------------|----------|
+| `careful` | New projects | confirm mode, 2 agents, 0.8 threshold |
+| `balanced` | Normal use | automatic mode, 3 agents, 0.7 threshold |
+| `aggressive` | Large projects | automatic mode, 5 agents, 0.6 threshold |
 
 ---
 
@@ -383,7 +405,7 @@ You must run the migration script first:
 
 ### implement-features
 
-**Purpose:** Autonomous feature implementation with regression testing and quality verification.
+**Purpose:** Autonomous feature implementation with regression testing, quality verification, and parallel dispatch.
 
 **Invocation:**
 ```
@@ -393,6 +415,8 @@ You must run the migration script first:
 /implement-features --mode=hybrid        # Browser tests for critical only
 /implement-features --resume             # Resume from last in-progress
 /implement-features --start-from=F042    # Start from specific feature
+/implement-features --parallel           # Enable parallel feature dispatch
+/implement-features --parallel --max-agents=5  # Override max parallel agents
 ```
 
 **Flags:**
@@ -403,18 +427,21 @@ You must run the migration script first:
 | `--mode=hybrid` | Browser tests for critical categories |
 | `--resume` | Resume from last in-progress feature |
 | `--start-from=<id>` | Start from specific feature ID |
+| `--parallel` | Enable parallel feature dispatch (uses dispatch config) |
+| `--max-agents=<n>` | Override max parallel agents (default: from config) |
 
 **Implementation Loop:**
 ```
 ┌─────────────────────────────────────────────┐
 │ 1. Get next pending feature from database   │
-│ 2. Run regression tests on passing features │
-│ 3. Implement the feature                    │
-│ 4. Verify implementation                    │
-│ 5. Mark feature as passing                  │
-│ 6. Commit with feature ID                   │
-│ 7. Checkpoint (user can pause)              │
-│ 8. Repeat until all features done           │
+│ 2. Dispatch analysis (if --parallel)        │
+│ 3. Run regression tests on passing features │
+│ 4. Implement the feature                    │
+│ 5. Verify implementation                    │
+│ 6. Mark feature as passing                  │
+│ 7. Commit with feature ID                   │
+│ 8. Checkpoint (user can pause)              │
+│ 9. Repeat until all features done           │
 └─────────────────────────────────────────────┘
 ```
 
@@ -425,15 +452,24 @@ You must run the migration script first:
 | `yolo` | Lint and type-check only | Fast | Minimal |
 | `hybrid` | Browser for critical categories | Medium | Selective |
 
+**Parallel Execution:**
+When `--parallel` is enabled, features can be implemented in parallel:
+- Different categories (F, I, S, etc.) can run simultaneously
+- Same-category features run sequentially (shared files)
+- Critical categories (A: Security, P: Payment) never parallelize
+- Uses MCP tools: `feature_get_parallelizable`, `feature_create_parallel_group`
+
 **When to Use:**
 - After running `/new-project --autonomous`
 - Incremental feature delivery
 - Automated development workflows
+- Parallel feature implementation for faster delivery
 
 **Prerequisites:**
 - Feature database created by `/new-project --autonomous`
 - MCP servers configured
 - Testing infrastructure in place
+- Dispatch config at `.claude/memories/.dispatch-config.json` (for parallel mode)
 
 ---
 
