@@ -19,7 +19,12 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 - [Commands Reference](#commands-reference)
   - [Project Commands](#project-commands)
   - [Reflect Commands](#reflect-commands)
+  - [Dispatch Commands](#dispatch-commands)
   - [PDF Commands](#pdf-commands)
+- [Intelligent Dispatch](#intelligent-dispatch)
+  - [Sub-Agent Dispatch](#sub-agent-dispatch)
+  - [Intent Detection](#intent-detection)
+  - [Configuration](#dispatch-configuration)
 - [Setup Guide](#setup-guide)
 - [Directory Structure](#directory-structure)
 - [Framework Components](#framework-components)
@@ -39,6 +44,7 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 - **Security Model** - Safe autonomous operation with command allowlists
 - **Session Continuity** - Context preservation and minimal-context resume
 - **Autonomous Development** - Full project implementation from idea to code
+- **Intelligent Dispatch** - Automatic sub-agent parallelization and intent detection
 
 ---
 
@@ -302,6 +308,8 @@ Tasks are locked when an agent starts work:
 | `/implement-features` | Implement features (autonomous mode) |
 | `/implement-features --mode=yolo` | Fast mode (lint only) |
 | `/implement-features --resume` | Resume from last session |
+| `/implement-features --parallel` | Enable parallel feature dispatch |
+| `/implement-features --max-agents=5` | Override max parallel agents |
 
 ### Reflect Commands
 
@@ -314,11 +322,24 @@ Tasks are locked when an agent starts work:
 | `/reflect status` | Show task/epic overview |
 | `/reflect status --ready` | Show available tasks |
 | `/reflect status --locked` | Show locked tasks |
+| `/reflect status --dispatch` | Show dispatch analysis for ready tasks |
 | `/reflect unlock T002` | Force unlock stale task |
 | `/reflect config` | Show configuration |
+| `/reflect config dispatch` | Show dispatch configuration |
+| `/reflect config intent` | Show intent detection configuration |
 | `/reflect config lockTimeout 1800` | Update setting |
+| `/reflect config --preset balanced` | Apply configuration preset |
 | `/reflect on` | Enable auto-reflection |
 | `/reflect off` | Disable auto-reflection |
+
+### Dispatch Commands
+
+| Command | Description |
+|---------|-------------|
+| `/reflect dispatch on` | Enable automatic sub-agent dispatch |
+| `/reflect dispatch off` | Disable automatic sub-agent dispatch |
+| `/reflect intent on` | Enable intent detection |
+| `/reflect intent off` | Disable intent detection |
 
 ### PDF Commands
 
@@ -331,6 +352,71 @@ Tasks are locked when an agent starts work:
 | `/pdf create` | Create new PDF |
 | `/pdf ocr <file>` | OCR scanned PDF |
 | `/pdf info <file>` | Show PDF metadata |
+
+---
+
+## Intelligent Dispatch
+
+The framework includes an **Intelligent Dispatch System** that automatically parallelizes work and detects user intent.
+
+### Sub-Agent Dispatch
+
+Automatically analyzes task dependencies and spawns parallel agents for independent work:
+
+- **At Resume** - Analyzes registry for parallelizable tasks
+- **After Task Completion** - Re-analyzes to find newly unblocked tasks
+- **After Feature Completion** - Checks for parallelizable features
+
+**Task Registry Dispatch:**
+1. Gets all `ready` tasks (dependencies met, not locked)
+2. Builds dependency graph to find independent clusters
+3. Checks scope conflicts (overlapping files/directories)
+4. Spawns sub-agents with isolated scope and context
+
+**Feature Database Dispatch:**
+- Different categories can often parallelize
+- Same-category features run sequentially (shared files)
+- Critical categories (A: Security, P: Payment) never parallelize
+
+### Intent Detection
+
+Detects natural language patterns and suggests appropriate skills:
+
+| Pattern | Suggested Skill |
+|---------|-----------------|
+| "add feature", "implement", "build" | `/new-feature` |
+| "fix bug", "debug", "broken" | `/fix-bug` |
+| "refactor", "clean up", "restructure" | `/refactor` |
+| "create pr", "pull request" | `/create-pr` |
+| "continue", "resume", "pick up where" | `/reflect resume` |
+| "design", "think through", "explore" | `brainstorming` |
+
+**Rules:**
+- Only suggests when confidence ≥ 0.7
+- Always suggests, never auto-invokes (user must confirm)
+- Respects explicit commands (if user types `/skill`, skip detection)
+
+### Dispatch Configuration
+
+Location: `.claude/memories/.dispatch-config.json`
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `dispatch.enabled` | true | Enable automatic sub-agent dispatch |
+| `dispatch.mode` | "automatic" | "automatic" or "confirm" before spawning |
+| `dispatch.maxParallelAgents` | 3 | Max concurrent sub-agents |
+| `intentDetection.enabled` | true | Enable natural language skill detection |
+| `intentDetection.mode` | "suggest" | "suggest" (always) or "off" |
+| `intentDetection.confidenceThreshold` | 0.7 | Minimum confidence to suggest skill |
+
+**Presets:**
+| Preset | Description | Settings |
+|--------|-------------|----------|
+| `careful` | New projects | confirm mode, 2 agents, 0.8 threshold |
+| `balanced` | Normal use | automatic mode, 3 agents, 0.7 threshold |
+| `aggressive` | Large projects | automatic mode, 5 agents, 0.6 threshold |
+
+Apply with: `/reflect config --preset balanced`
 
 ---
 
@@ -605,6 +691,11 @@ docs/                            # Project documentation (created by /new-projec
 | `autoAssignNextTask` | true | Auto-suggest next task |
 | `maxContextTokens` | 200000 | Total context budget |
 | `targetResumeTokens` | 8000 | Target for resume context |
+| `dispatch.enabled` | true | Enable automatic sub-agent dispatch |
+| `dispatch.mode` | "automatic" | "automatic" or "confirm" before spawning |
+| `intentDetection.enabled` | true | Enable natural language skill detection |
+| `intentDetection.mode` | "suggest" | "suggest" (always) or "off" |
+| `intentDetection.confidenceThreshold` | 0.7 | Minimum confidence to suggest skill |
 
 ---
 
@@ -684,10 +775,18 @@ ls docs/tasks/registry.json
 
 ## Version
 
-**Framework Version:** 1.3.0
-**Last Updated:** 2026-01-11
+**Framework Version:** 1.4.0
+**Last Updated:** 2026-01-12
 
 ### Changelog
+
+**v1.4.0** (2026-01-12)
+- Added Intelligent Dispatch System for automatic sub-agent parallelization
+- Added Intent Detection for natural language skill suggestions
+- Added dispatch configuration with presets (careful, balanced, aggressive)
+- Added `/reflect dispatch` and `/reflect intent` toggle commands
+- Added `--parallel` and `--max-agents` flags to `/implement-features`
+- Added `--dispatch` flag to `/reflect status`
 
 **v1.3.0** (2026-01-11)
 - Added `/migrate` skill for migrating existing projects to Claude Forge
