@@ -197,6 +197,7 @@ The file `.claude/memories/progress-notes.md`:
 - **Task Management** - Epic/task tracking with dependencies
 - **Session Management** - Parallel session support with conflict detection
 - **Autonomous Development** - Full project implementation from idea to code
+- **Intelligent Dispatch** - Automatic sub-agent parallelization and intent detection
 
 ---
 
@@ -221,6 +222,10 @@ The file `.claude/memories/progress-notes.md`:
 | `/reflect status --locked` | Show locked tasks |
 | `/reflect unlock T002` | Force unlock a stale task |
 | `/reflect config` | Show/update configuration |
+| `/reflect config dispatch` | Show dispatch configuration |
+| `/reflect config intent` | Show intent detection configuration |
+| `/reflect dispatch on/off` | Toggle automatic dispatch |
+| `/reflect intent on/off` | Toggle intent detection |
 | `/implement-features` | Implement features from database (autonomous mode) |
 
 ### Key Locations
@@ -238,6 +243,7 @@ The file `.claude/memories/progress-notes.md`:
 | `.claude/memories/sessions/active/` | Currently running sessions |
 | `.claude/memories/sessions/completed/` | Archived sessions |
 | `.claude/memories/progress-notes.md` | Append-only session log |
+| `.claude/memories/.dispatch-config.json` | Intelligent dispatch configuration |
 
 ---
 
@@ -447,6 +453,180 @@ The registry and session files prevent conflicts.
 
 ---
 
+## Intelligent Dispatch System
+
+The framework includes an **Intelligent Dispatch System** that automatically parallelizes work and detects user intent. This is a framework behavior, not a skill - it runs automatically based on configuration.
+
+### Core Components
+
+| Component | Purpose |
+|-----------|---------|
+| **Sub-Agent Dispatch** | Analyzes task dependencies, spawns parallel agents for independent work |
+| **Intent Detection** | Detects natural language patterns, suggests appropriate skills |
+
+### Dispatch Triggers
+
+Automatic dispatch analysis occurs at these points:
+
+1. **At Resume** (`/reflect resume`) - Analyze registry for parallelizable tasks
+2. **After Task Completion** - Re-analyze to find newly unblocked tasks
+3. **After Feature Completion** - Check for parallelizable features
+
+### Dispatch Flow
+
+```
+Session Start / Task Complete
+        │
+        ▼
+┌─────────────────────────┐
+│ Analyze Dependencies    │
+│ - Task Registry: graph  │
+│ - Features: categories  │
+└───────────┬─────────────┘
+            │
+            ▼
+┌─────────────────────────┐     ┌─────────────────────────┐
+│ Found parallelizable    │────▶│ Config: dispatch.mode?  │
+│ work items              │     └───────────┬─────────────┘
+└─────────────────────────┘                 │
+                              ┌─────────────┴─────────────┐
+                              │                           │
+                         "automatic"                  "confirm"
+                              │                           │
+                              ▼                           ▼
+                    ┌─────────────────┐       ┌─────────────────────┐
+                    │ Spawn agents    │       │ "I can parallelize: │
+                    │ immediately     │       │  - T005, T006, T008 │
+                    └─────────────────┘       │ Proceed?" [Y/n]     │
+                                              └─────────────────────┘
+```
+
+### Task Registry Dispatch Rules
+
+For tasks in `registry.json`:
+
+1. **Get all `ready` tasks** - Dependencies met, not locked
+2. **Build dependency graph** - Find independent clusters
+3. **Check scope conflicts** - Exclude tasks with overlapping files/directories
+4. **Rank by priority** - Higher priority tasks first
+5. **Spawn sub-agents** - Each gets isolated scope and context
+
+### Feature Database Dispatch Rules
+
+For features in the feature database:
+
+1. **Category Independence** - Different categories can often parallelize
+2. **Same-Category Serialization** - Same category features share files, must serialize
+3. **Critical Category Lock** - Categories A (Security) and P (Payment) never parallelize
+4. **Priority Constraints** - Priority 1 features always sequential
+
+### Intent Detection
+
+**Trigger:** Every user message, before any other action.
+
+When you receive a user message:
+
+1. **Check for patterns** matching known skills
+2. **Calculate confidence** based on keywords and context
+3. **If confidence ≥ 0.7**, suggest the skill:
+
+```
+User: "Let's add dark mode to the app"
+        │
+        ▼
+"This looks like a new feature request.
+ Use `/new-feature` workflow? [Y/n]"
+```
+
+### Detected Skills
+
+| Skill | Trigger Patterns |
+|-------|------------------|
+| `/new-feature` | "add feature", "implement", "build", "create new" |
+| `/fix-bug` | "fix bug", "debug", "broken", "not working", "error in" |
+| `/refactor` | "refactor", "clean up", "restructure", "improve code" |
+| `/create-pr` | "create pr", "pull request", "ready for review" |
+| `/release` | "release", "new version", "cut release", "publish" |
+| `/reflect resume` | "continue", "resume", "pick up where", "last session" |
+| `brainstorming` | "design", "think through", "explore options", "how should we" |
+| `systematic-debugging` | "why is this", "investigate", "root cause", "diagnose" |
+| `writing-plans` | "write plan", "implementation plan", "break down into steps" |
+
+### Intent Detection Rules
+
+- **Threshold:** Only suggest when confidence ≥ 0.7
+- **Mode:** Always suggest, never auto-invoke (user must confirm)
+- **Explicit commands:** If user types `/skill`, honor it - skip detection
+- **Questions:** "How do I...?" is a question, not a request - answer directly
+- **Negation:** "Don't create a PR" - detect negation, don't suggest
+- **In workflow:** If already in a skill workflow, don't interrupt
+
+### Configuration
+
+Location: `.claude/memories/.dispatch-config.json`
+
+```json
+{
+  "dispatch": {
+    "enabled": true,
+    "mode": "automatic",
+    "maxParallelAgents": 3
+  },
+  "intentDetection": {
+    "enabled": true,
+    "mode": "suggest",
+    "confidenceThreshold": 0.7
+  }
+}
+```
+
+| Setting | Options | Default |
+|---------|---------|---------|
+| `dispatch.enabled` | true/false | true |
+| `dispatch.mode` | "automatic", "confirm" | "automatic" |
+| `dispatch.maxParallelAgents` | 1-10 | 3 |
+| `intentDetection.enabled` | true/false | true |
+| `intentDetection.mode` | "suggest", "off" | "suggest" |
+| `intentDetection.confidenceThreshold` | 0.5-1.0 | 0.7 |
+
+### Quick Toggles
+
+```
+/reflect dispatch on       # Enable automatic dispatch
+/reflect dispatch off      # Disable automatic dispatch
+/reflect intent on         # Enable intent detection
+/reflect intent off        # Disable intent detection
+/reflect config --preset balanced  # Apply preset configuration
+```
+
+### Presets
+
+| Preset | Description | Settings |
+|--------|-------------|----------|
+| `careful` | New projects | confirm mode, 2 agents, threshold 0.8 |
+| `balanced` | Normal use | automatic mode, 3 agents, threshold 0.7 |
+| `aggressive` | Large projects | automatic mode, 5 agents, threshold 0.6 |
+
+### Sub-Agent Coordination
+
+When spawning sub-agents:
+
+1. **Session naming:** `{parent-session-id}-agent-{n}`
+2. **Scope isolation:** Each agent gets non-overlapping directories
+3. **Registry updates:** Agents update registry on completion
+4. **Continuous check:** Parent re-analyzes after each completion
+
+### Inviolable Dispatch Rules
+
+1. **Never parallelize Security (A) or Payment (P)** - These require full attention
+2. **Never exceed maxParallelAgents** - Respect the configured limit
+3. **Always check scope conflicts** - Don't spawn if scopes would overlap
+4. **Intent detection never auto-invokes** - Always suggests, user confirms
+
+See `reference/11-intelligent-dispatch.md` for detailed algorithms and patterns.
+
+---
+
 ## Security Model
 
 ### Allowlist Approach
@@ -581,6 +761,11 @@ On unexpected termination:
 | `maxParallelAgents` | 3 | Max concurrent task locks |
 | `autoAssignNextTask` | true | Auto-suggest next task |
 | `sessionStaleTimeout` | 86400 | Seconds before active session is stale (24h) |
+| `dispatch.enabled` | true | Enable automatic sub-agent dispatch |
+| `dispatch.mode` | "automatic" | "automatic" or "confirm" before spawning |
+| `intentDetection.enabled` | true | Enable natural language intent detection |
+| `intentDetection.mode` | "suggest" | "suggest" or "off" |
+| `intentDetection.confidenceThreshold` | 0.7 | Minimum confidence to suggest skill |
 
 ---
 
@@ -595,6 +780,7 @@ On unexpected termination:
 | Security Model | `reference/08-security-model.template.md` |
 | Autonomous Dev | `reference/09-autonomous-development.template.md` |
 | Parallel Sessions | `reference/10-parallel-sessions.md` |
+| Intelligent Dispatch | `reference/11-intelligent-dispatch.md` |
 
 ---
 
