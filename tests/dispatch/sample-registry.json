@@ -1,0 +1,228 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Sample registry demonstrating dispatch scenarios",
+  "project": "dispatch-test",
+  "version": "1.1.0",
+  "lastUpdated": "2026-01-12T14:00:00Z",
+  "settings": {
+    "lockTimeoutSeconds": 3600,
+    "allowManualUnlock": true,
+    "maxParallelAgents": 3,
+    "autoAssignNext": true
+  },
+  "stats": {
+    "epics": {
+      "total": 2,
+      "completed": 0,
+      "in_progress": 2,
+      "blocked": 0
+    },
+    "tasks": {
+      "total": 8,
+      "completed": 3,
+      "in_progress": 0,
+      "continuation": 0,
+      "ready": 4,
+      "pending": 1
+    }
+  },
+  "epics": [
+    {
+      "id": "E01",
+      "name": "Authentication",
+      "description": "User authentication system",
+      "category": "A",
+      "status": "in_progress",
+      "dependencies": [],
+      "priority": 1,
+      "tasks": ["T001", "T002", "T003", "T004", "T005"]
+    },
+    {
+      "id": "E02",
+      "name": "Dashboard",
+      "description": "User dashboard with analytics",
+      "category": "F",
+      "status": "in_progress",
+      "dependencies": [],
+      "priority": 2,
+      "tasks": ["T006", "T007", "T008"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T001",
+      "epic": "E01",
+      "name": "Setup auth infrastructure",
+      "category": "A",
+      "priority": 1,
+      "status": "completed",
+      "dependencies": [],
+      "estimatedSize": "medium",
+      "file": "docs/epics/E01-authentication/tasks/T001-setup-auth.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/auth/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null
+    },
+    {
+      "id": "T002",
+      "epic": "E01",
+      "name": "Implement login form",
+      "category": "E",
+      "priority": 2,
+      "status": "completed",
+      "dependencies": ["T001"],
+      "estimatedSize": "small",
+      "file": "docs/epics/E01-authentication/tasks/T002-login-form.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/components/auth/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null
+    },
+    {
+      "id": "T003",
+      "epic": "E01",
+      "name": "Add session management",
+      "category": "A",
+      "priority": 1,
+      "status": "completed",
+      "dependencies": ["T001"],
+      "estimatedSize": "medium",
+      "file": "docs/epics/E01-authentication/tasks/T003-session-mgmt.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/auth/session/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null
+    },
+    {
+      "id": "T004",
+      "epic": "E01",
+      "name": "Write auth unit tests",
+      "category": "A",
+      "priority": 2,
+      "status": "ready",
+      "dependencies": ["T001", "T003"],
+      "estimatedSize": "small",
+      "file": "docs/epics/E01-authentication/tasks/T004-auth-tests.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/tests/auth/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null,
+      "_dispatchNote": "INDEPENDENT - can parallelize with T006, T007"
+    },
+    {
+      "id": "T005",
+      "epic": "E01",
+      "name": "Add password reset flow",
+      "category": "D",
+      "priority": 3,
+      "status": "pending",
+      "dependencies": ["T002", "T003", "T004"],
+      "estimatedSize": "medium",
+      "file": "docs/epics/E01-authentication/tasks/T005-password-reset.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/auth/", "src/components/auth/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null,
+      "_dispatchNote": "PENDING - waiting on T004"
+    },
+    {
+      "id": "T006",
+      "epic": "E02",
+      "name": "Create dashboard layout",
+      "category": "F",
+      "priority": 1,
+      "status": "ready",
+      "dependencies": [],
+      "estimatedSize": "medium",
+      "file": "docs/epics/E02-dashboard/tasks/T006-dashboard-layout.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/components/dashboard/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null,
+      "_dispatchNote": "INDEPENDENT - can parallelize with T004, T007"
+    },
+    {
+      "id": "T007",
+      "epic": "E02",
+      "name": "Add analytics charts",
+      "category": "K",
+      "priority": 2,
+      "status": "ready",
+      "dependencies": [],
+      "estimatedSize": "small",
+      "file": "docs/epics/E02-dashboard/tasks/T007-analytics-charts.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/components/charts/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null,
+      "_dispatchNote": "INDEPENDENT - can parallelize with T004, T006"
+    },
+    {
+      "id": "T008",
+      "epic": "E02",
+      "name": "Implement dashboard filters",
+      "category": "G",
+      "priority": 3,
+      "status": "ready",
+      "dependencies": ["T006"],
+      "estimatedSize": "small",
+      "file": "docs/epics/E02-dashboard/tasks/T008-dashboard-filters.md",
+      "lock": null,
+      "scope": {
+        "directories": ["src/components/dashboard/filters/"],
+        "files": []
+      },
+      "parallelGroup": null,
+      "dispatchedBy": null,
+      "dispatchedAt": null,
+      "_dispatchNote": "SCOPE CONFLICT with T006 - same parent directory"
+    }
+  ],
+  "parallelGroups": [],
+  "_dispatchAnalysis": {
+    "_comment": "This section shows expected dispatch analysis results",
+    "readyTasks": ["T004", "T006", "T007", "T008"],
+    "independentTasks": ["T004", "T006", "T007"],
+    "scopeConflicts": [
+      {
+        "task": "T008",
+        "conflictsWith": "T006",
+        "reason": "T008 scope (src/components/dashboard/filters/) is inside T006 scope (src/components/dashboard/)"
+      }
+    ],
+    "proposedDispatch": {
+      "mainAgent": "T006",
+      "subAgents": ["T004", "T007"],
+      "deferred": ["T008"]
+    }
+  }
+}

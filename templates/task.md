@@ -8,6 +8,9 @@ status: pending
 dependencies: []
 estimatedSize: small
 createdAt: "[TIMESTAMP]"
+scope:
+  directories: []
+  files: []
 ---
 
 # T001: [Task Name]
@@ -17,6 +20,15 @@ createdAt: "[TIMESTAMP]"
 **Epic:** E01 - [Epic Name]
 **Category:** A - Security & Auth
 **Dependencies:** None
+
+## Scope Declaration
+
+<!-- Used by Intelligent Dispatch for parallelization -->
+**Directories:** (paths this task modifies)
+- `path/to/dir/`
+
+**Files:** (specific files if narrow scope)
+- `path/to/specific/file.ts`
 
 ## Objective
 

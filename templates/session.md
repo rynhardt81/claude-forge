@@ -62,6 +62,42 @@ Complete ALL checks before proceeding:
 
 ---
 
+## Dispatch Analysis
+
+_Complete ONLY if task registry exists and dispatch is enabled._
+
+### Ready Tasks Identified
+
+| Task ID | Name | Priority | Scope | Can Parallelize? |
+|---------|------|----------|-------|------------------|
+| | | | | |
+
+### Parallelization Proposal
+
+**Main Agent:**
+- {Task this session will work on}
+
+**Sub-Agents (if any):**
+- Agent 1: {task} - {scope}
+- Agent 2: {task} - {scope}
+
+**Deferred (scope conflicts):**
+- {tasks that conflict with main agent scope}
+
+### Dispatch Decision
+
+| Setting | Value |
+|---------|-------|
+| dispatch.enabled | {true/false} |
+| dispatch.mode | {automatic/confirm} |
+| maxParallelAgents | {n} |
+| Ready tasks found | {n} |
+| Can parallelize | {n} |
+
+**Action taken:** {None - not enough tasks / Spawned N agents / User declined}
+
+---
+
 ## Working On
 
 Current tasks in progress:

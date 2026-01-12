@@ -915,6 +915,211 @@ Update intent detection settings with `/reflect config <key> <value>`:
 
 ---
 
+## Dispatch Analysis Flow
+
+**When to run:** After context loading in session protocol, BEFORE starting work.
+
+**Prerequisites:**
+- `docs/tasks/registry.json` exists
+- `.claude/memories/.dispatch-config.json` has `dispatch.enabled: true`
+- At least 2 tasks with status `ready` in registry
+
+### Step 1: Load Configuration
+
+```bash
+# Read dispatch config
+cat .claude/memories/.dispatch-config.json
+```
+
+Extract these values:
+- `dispatch.enabled` - Skip if false
+- `dispatch.mode` - "automatic" or "confirm"
+- `dispatch.maxParallelAgents` - Max concurrent agents
+- `dispatch.taskRegistry.minReadyTasks` - Min tasks needed
+
+### Step 2: Identify Ready Tasks
+
+From `registry.json`, find all tasks where:
+- `status == "ready"`
+- `lockedBy` is null or empty
+
+List them with their properties:
+- ID, name, priority
+- dependencies (all must be `completed`)
+- scope.directories and scope.files
+
+**If fewer than `minReadyTasks` ready:** Skip dispatch, proceed normally.
+
+### Step 3: Build Dependency Graph
+
+For each ready task, check:
+1. Does it depend on any other ready task? (directly or transitively)
+2. Does any other ready task depend on it?
+
+Tasks are **independent** if neither depends on the other.
+
+```
+Example:
+- T005: deps [T001✓, T003✓] - ready, independent
+- T006: deps [T002✓] - ready, independent
+- T007: deps [T005] - NOT independent (T005 must complete first)
+```
+
+### Step 4: Check Scope Conflicts
+
+For each independent task pair, check if scopes overlap:
+
+```
+hasScopeConflict(task1, task2):
+  FOR dir1 IN task1.scope.directories:
+    FOR dir2 IN task2.scope.directories:
+      IF dir1 starts with dir2 OR dir2 starts with dir1:
+        RETURN true  # Conflict
+  FOR file1 IN task1.scope.files:
+    FOR file2 IN task2.scope.files:
+      IF file1 == file2:
+        RETURN true  # Conflict
+  RETURN false
+```
+
+Also check against YOUR declared session scope.
+
+### Step 5: Rank and Select
+
+From non-conflicting independent tasks:
+1. Sort by priority (lower number = higher priority)
+2. Select up to `maxParallelAgents - 1` tasks for sub-agents
+3. Main agent takes the highest priority task
+
+### Step 6: Execute Dispatch
+
+**If `dispatch.mode == "confirm"`:**
+
+```markdown
+## Dispatch Proposal
+
+I found {N} independent tasks that can run in parallel:
+
+**Main Agent (you):**
+- T015: Add chart component (Priority 1, scope: src/components/charts/)
+
+**Sub-Agent 1:**
+- T016: Implement filters (Priority 2, scope: src/components/filters/)
+
+**Sub-Agent 2:**
+- T021: Create report template (Priority 1, scope: src/reports/)
+
+Spawn sub-agents to work in parallel? [Y/n]
+```
+
+Wait for user confirmation before spawning.
+
+**If `dispatch.mode == "automatic"`:**
+
+Spawn immediately, notify user:
+
+```markdown
+## Dispatch Initiated
+
+Spawning 2 sub-agents for parallel work:
+- Agent 1: T016 - Implement filters
+- Agent 2: T021 - Create report template
+
+Main agent continuing with: T015 - Add chart component
+```
+
+### Step 7: Spawn Sub-Agents
+
+For each task to dispatch, use the Task tool:
+
+```
+Task tool invocation:
+- subagent_type: "general-purpose"
+- description: "Task {task.id}: {task.name}"
+- prompt: [Use template below]
+- run_in_background: true
+```
+
+**Sub-Agent Prompt Template:**
+
+```markdown
+## Task Assignment: {task.id} - {task.name}
+
+**Session ID:** {parent-session-id}-agent-{n}
+**Parent Session:** {parent-session-id}
+
+### Scope (STRICT - do NOT modify files outside)
+Directories: {task.scope.directories}
+Files: {task.scope.files}
+
+### Task Details
+{Load from task file: docs/epics/{epic}/tasks/{task.id}-*.md}
+
+### Instructions
+1. Complete the session start protocol (create session file)
+2. Implement the task within declared scope ONLY
+3. Run relevant tests
+4. Commit with message: `feat({epic}): {task.name} [Task-ID: {task.id}]`
+5. Update registry: set task status to "completed"
+6. Update your session file, move to completed/
+
+### On Completion
+Report back:
+- status: "completed" | "blocked" | "partial"
+- commits: [list of commit hashes]
+- blockers: [if not completed]
+```
+
+### Step 8: Update Registry
+
+After spawning, update `registry.json`:
+
+```json
+{
+  "tasks": {
+    "T016": {
+      "status": "in_progress",
+      "lockedBy": "{parent-session-id}-agent-1",
+      "lockedAt": "{timestamp}",
+      "parallelGroup": "pg-{timestamp}",
+      "dispatchedBy": "{parent-session-id}"
+    }
+  },
+  "parallelGroups": {
+    "pg-{timestamp}": {
+      "id": "pg-{timestamp}",
+      "tasks": ["T016", "T021"],
+      "parentSession": "{parent-session-id}",
+      "startedAt": "{timestamp}",
+      "status": "active"
+    }
+  }
+}
+```
+
+### Step 9: Monitor and Continue
+
+After dispatch:
+1. Main agent proceeds with its assigned task
+2. When sub-agents complete, check for newly unblocked tasks
+3. Trigger continuous dispatch if new tasks became ready
+
+---
+
+## Continuous Dispatch
+
+After completing a task (main or sub-agent):
+
+1. **Update registry** - Mark task completed
+2. **Check if tasks became ready** - Dependencies now met?
+3. **If new ready tasks AND dispatch enabled:**
+   - Run dispatch analysis again (Steps 2-8)
+   - Spawn new sub-agents for parallelizable work
+
+This creates a continuous flow where completing one task can unlock others for parallel execution.
+
+---
+
 ## Manual Reflection Flow
 
 When `/reflect` is called without arguments:
