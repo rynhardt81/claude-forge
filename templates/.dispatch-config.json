@@ -1,0 +1,47 @@
+{
+  "$schema": "dispatch-config-schema.json",
+  "version": "1.0",
+  "dispatch": {
+    "enabled": true,
+    "mode": "automatic",
+    "maxParallelAgents": 3,
+    "triggerPoints": {
+      "onResume": true,
+      "onTaskComplete": true,
+      "onFeatureComplete": true
+    },
+    "taskRegistry": {
+      "enabled": true,
+      "minReadyTasks": 2,
+      "respectPriority": true,
+      "scopeConflictBehavior": "skip"
+    },
+    "featureDatabase": {
+      "enabled": true,
+      "categoryMatrix": "default",
+      "regressionStrategy": "shared",
+      "criticalCategories": ["A", "P"]
+    }
+  },
+  "intentDetection": {
+    "enabled": true,
+    "mode": "suggest",
+    "confidenceThreshold": 0.7,
+    "skills": {
+      "framework": true,
+      "superpowers": true
+    },
+    "excludePatterns": [
+      "how do I",
+      "what is",
+      "explain",
+      "show me"
+    ]
+  },
+  "notifications": {
+    "onAgentSpawn": true,
+    "onAgentComplete": true,
+    "onConflictDetected": true,
+    "verbosity": "normal"
+  }
+}

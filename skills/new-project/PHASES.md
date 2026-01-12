@@ -467,7 +467,25 @@ Hybrid mode:
 Save mode to: .claude/memories/testing-mode.txt
 ```
 
-### 4.6 Initialize Progress Tracking
+### 4.6 Initialize Dispatch Configuration
+```
+Copy template: templates/.dispatch-config.json
+To: .claude/memories/.dispatch-config.json
+
+This configures the Intelligent Dispatch System:
+- Sub-agent parallelization (task registry + feature database)
+- Intent detection for natural language skill suggestions
+- See reference/11-intelligent-dispatch.md for details
+
+Default settings:
+- dispatch.enabled: true
+- dispatch.mode: "automatic"
+- dispatch.maxParallelAgents: 3
+- intentDetection.enabled: true
+- intentDetection.mode: "suggest"
+```
+
+### 4.7 Initialize Progress Tracking
 ```
 Create: .claude/memories/progress-notes.md
 
@@ -499,6 +517,7 @@ Template:
 - ✅ Security model initialized
 - ✅ init.sh created and tested
 - ✅ Testing mode configured
+- ✅ Dispatch config initialized
 
 ---
 

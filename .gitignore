@@ -8,6 +8,7 @@ memories/sessions/completed/session-*.md
 memories/.session-skills
 memories/.reflect-status
 memories/.reflect-config.json
+memories/.dispatch-config.json
 
 # Project docs directory (created per-project, not part of framework)
 docs/
