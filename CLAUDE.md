@@ -86,6 +86,14 @@ When this framework is present in a project's `.claude/` directory, you are **bo
 │  │         Scope is clear and documented                    │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │                              ↓                                   │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ STEP 7: Dispatch Analysis (if dispatch enabled)          │   │
+│  │         - Check .dispatch-config.json for settings       │   │
+│  │         - Analyze task registry for parallelizable work  │   │
+│  │         - Propose sub-agent dispatch if applicable       │   │
+│  │         - See reference/11-intelligent-dispatch.md       │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                              ↓                                   │
 │                     PROCEED WITH USER REQUEST                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
