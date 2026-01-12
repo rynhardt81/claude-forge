@@ -1,5 +1,12 @@
 # Claude Forge
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/rynhardt81/claude-forge)](https://github.com/rynhardt81/claude-forge/releases)
+[![GitHub stars](https://img.shields.io/github/stars/rynhardt81/claude-forge)](https://github.com/rynhardt81/claude-forge/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/rynhardt81/claude-forge)](https://github.com/rynhardt81/claude-forge/issues)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rynhardt81/claude-forge)](https://github.com/rynhardt81/claude-forge/commits/main)
+[![Made for Claude Code](https://img.shields.io/badge/Made%20for-Claude%20Code-blueviolet)](https://claude.ai)
+
 A comprehensive framework for AI-assisted software development with Claude Code. Provides structured workflows, specialized agents, task management with dependencies, and reusable skills for autonomous development with human oversight.
 
 ---
