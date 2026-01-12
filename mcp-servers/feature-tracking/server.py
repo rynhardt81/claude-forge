@@ -6,7 +6,7 @@ MCP Server for Feature Management
 Provides tools to manage features in the autonomous coding system.
 Features are stored in a SQLite database and accessed via MCP tools.
 
-Tools:
+Core Tools:
 - feature_get_stats: Get progress statistics
 - feature_get_next: Get next feature to implement
 - feature_get_for_regression: Get random passing features for testing
@@ -15,16 +15,29 @@ Tools:
 - feature_mark_in_progress: Mark a feature as in-progress
 - feature_clear_in_progress: Clear in-progress status
 - feature_create_bulk: Create multiple features at once
+- feature_get_by_category: Get features by category code
+
+Dispatch Tools (v1.1):
+- feature_get_parallelizable: Get features that can run in parallel
+- feature_create_parallel_group: Create a parallel execution group
+- feature_get_parallel_status: Check status of a parallel group
+- feature_complete_parallel_group: Mark parallel group as complete
+- feature_abort_parallel_group: Abort and release parallel group
 
 Database Location:
 - Default: {PROJECT_DIR}/features.db
 - Recommended: {project_root}/.claude/features/features.db
+
+Version History:
+- v1.0: Initial release with core feature management
+- v1.1: Added dispatch tools for parallel feature execution
 """
 
 import json
 import os
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -33,7 +46,13 @@ from pydantic import Field
 from sqlalchemy.sql.expression import func
 
 # Import local modules
-from database import Feature, create_database
+from database import (
+    Feature,
+    ParallelGroup,
+    can_parallelize_categories,
+    create_database,
+    CRITICAL_CATEGORIES,
+)
 from migration import migrate_json_to_sqlite
 
 # Configuration from environment
@@ -410,6 +429,372 @@ def feature_get_by_category(
             "count": len(features),
             "passing": passing,
             "pending": pending
+        }, indent=2)
+    finally:
+        session.close()
+
+
+# ============================================================================
+# Dispatch Tools (added in v1.1)
+# ============================================================================
+
+
+@mcp.tool()
+def feature_get_parallelizable(
+    limit: Annotated[int, Field(default=5, ge=1, le=10, description="Maximum number of parallelizable features to return")] = 5
+) -> str:
+    """Get pending features that can be safely parallelized.
+
+    Analyzes pending features and returns a set that can be worked on
+    in parallel based on category compatibility rules:
+    - Critical categories (A: Security, P: Payment) never parallelize
+    - Same-category features never parallelize (likely share files)
+    - Different categories parallelize based on the compatibility matrix
+
+    Use this at the start of /implement-features to identify parallel work.
+
+    Args:
+        limit: Maximum number of features to return (1-10, default 5)
+
+    Returns:
+        JSON with:
+        - primary: Feature dict (highest priority pending feature)
+        - parallelizable: List of features that can run with primary
+        - deferred: List of features that cannot parallelize (with reason)
+        - analysis: Summary of parallelization analysis
+    """
+    session = get_session()
+    try:
+        # Get all pending features ordered by priority
+        pending = (
+            session.query(Feature)
+            .filter(Feature.passes == False, Feature.in_progress == False)
+            .order_by(Feature.priority.asc(), Feature.id.asc())
+            .all()
+        )
+
+        if len(pending) == 0:
+            return json.dumps({
+                "error": "No pending features found",
+                "primary": None,
+                "parallelizable": [],
+                "deferred": []
+            })
+
+        # Primary feature is highest priority
+        primary = pending[0]
+
+        # Check if primary is in a critical category
+        if primary.category.upper() in CRITICAL_CATEGORIES:
+            return json.dumps({
+                "primary": primary.to_dict(),
+                "parallelizable": [],
+                "deferred": [
+                    {"feature": f.to_dict(), "reason": f"Primary feature is critical category ({primary.category})"}
+                    for f in pending[1:]
+                ],
+                "analysis": {
+                    "primary_category": primary.category,
+                    "is_critical": True,
+                    "message": f"Category {primary.category} (Security/Payment) requires exclusive execution"
+                }
+            }, indent=2)
+
+        # Find features that can parallelize with primary
+        parallelizable = []
+        deferred = []
+
+        for feature in pending[1:]:
+            if len(parallelizable) >= limit - 1:
+                deferred.append({
+                    "feature": feature.to_dict(),
+                    "reason": "Limit reached"
+                })
+                continue
+
+            cat = feature.category.upper()
+
+            # Critical categories never parallelize
+            if cat in CRITICAL_CATEGORIES:
+                deferred.append({
+                    "feature": feature.to_dict(),
+                    "reason": f"Critical category ({cat}) cannot parallelize"
+                })
+                continue
+
+            # Check if can parallelize with primary
+            if not can_parallelize_categories(primary.category, cat):
+                deferred.append({
+                    "feature": feature.to_dict(),
+                    "reason": f"Category {cat} may conflict with primary category {primary.category}"
+                })
+                continue
+
+            # Check if can parallelize with already selected features
+            can_add = True
+            for selected in parallelizable:
+                if not can_parallelize_categories(selected.category, cat):
+                    can_add = False
+                    deferred.append({
+                        "feature": feature.to_dict(),
+                        "reason": f"Category {cat} may conflict with already selected category {selected.category}"
+                    })
+                    break
+
+            if can_add:
+                parallelizable.append(feature)
+
+        return json.dumps({
+            "primary": primary.to_dict(),
+            "parallelizable": [f.to_dict() for f in parallelizable],
+            "deferred": deferred,
+            "analysis": {
+                "primary_category": primary.category,
+                "is_critical": False,
+                "total_pending": len(pending),
+                "can_parallelize": len(parallelizable),
+                "deferred_count": len(deferred),
+                "categories_selected": [primary.category] + [f.category for f in parallelizable]
+            }
+        }, indent=2)
+    finally:
+        session.close()
+
+
+@mcp.tool()
+def feature_create_parallel_group(
+    feature_ids: Annotated[list[int], Field(description="List of feature IDs to include in the parallel group")],
+    session_id: Annotated[str, Field(description="Session ID of the parent session creating this group")]
+) -> str:
+    """Create a parallel execution group for multiple features.
+
+    Groups features together for coordinated parallel execution.
+    All features are marked as in_progress and assigned to the group.
+
+    Use this after feature_get_parallelizable to create a dispatch group.
+
+    Args:
+        feature_ids: List of feature IDs to include (must all be pending)
+        session_id: Parent session ID for tracking
+
+    Returns:
+        JSON with:
+        - group: ParallelGroup dict with id and details
+        - features: List of feature dicts that were assigned
+        - error: Error message if any features couldn't be assigned
+    """
+    session = get_session()
+    try:
+        if not feature_ids:
+            return json.dumps({"error": "No feature IDs provided"})
+
+        # Verify all features exist and are pending
+        features = []
+        errors = []
+        for fid in feature_ids:
+            feature = session.query(Feature).filter(Feature.id == fid).first()
+            if feature is None:
+                errors.append(f"Feature {fid} not found")
+            elif feature.passes:
+                errors.append(f"Feature {fid} is already passing")
+            elif feature.in_progress:
+                errors.append(f"Feature {fid} is already in progress")
+            elif feature.parallel_group_id is not None:
+                errors.append(f"Feature {fid} is already in a parallel group")
+            else:
+                features.append(feature)
+
+        if errors:
+            return json.dumps({"error": "Some features could not be assigned", "details": errors})
+
+        # Create the parallel group
+        group = ParallelGroup(
+            parent_session=session_id,
+            started_at=datetime.utcnow(),
+            status="active",
+            regression_status="pending"
+        )
+        session.add(group)
+        session.flush()  # Get the group ID
+
+        # Assign features to the group
+        for feature in features:
+            feature.parallel_group_id = group.id
+            feature.dispatched_by = session_id
+            feature.dispatched_at = datetime.utcnow()
+            feature.in_progress = True
+
+        session.commit()
+
+        # Refresh to get updated data
+        session.refresh(group)
+        for f in features:
+            session.refresh(f)
+
+        return json.dumps({
+            "group": group.to_dict(),
+            "features": [f.to_dict() for f in features]
+        }, indent=2)
+    except Exception as e:
+        session.rollback()
+        return json.dumps({"error": str(e)})
+    finally:
+        session.close()
+
+
+@mcp.tool()
+def feature_get_parallel_status(
+    group_id: Annotated[int, Field(description="ID of the parallel group to check", ge=1)]
+) -> str:
+    """Get the status of a parallel execution group.
+
+    Returns detailed status of all features in a parallel group,
+    including completion status and regression test status.
+
+    Use this to monitor progress of dispatched parallel work.
+
+    Args:
+        group_id: ID of the parallel group to check
+
+    Returns:
+        JSON with:
+        - group: ParallelGroup dict
+        - features: List of feature dicts with current status
+        - summary: Completion summary (total, passing, in_progress, pending)
+        - is_complete: True if all features are passing
+    """
+    session = get_session()
+    try:
+        group = session.query(ParallelGroup).filter(ParallelGroup.id == group_id).first()
+
+        if group is None:
+            return json.dumps({"error": f"Parallel group {group_id} not found"})
+
+        features = (
+            session.query(Feature)
+            .filter(Feature.parallel_group_id == group_id)
+            .order_by(Feature.priority.asc())
+            .all()
+        )
+
+        passing = sum(1 for f in features if f.passes)
+        in_progress = sum(1 for f in features if f.in_progress and not f.passes)
+        total = len(features)
+        is_complete = passing == total and total > 0
+
+        # Update group status if complete
+        if is_complete and group.status == "active":
+            group.status = "completed"
+            session.commit()
+            session.refresh(group)
+
+        return json.dumps({
+            "group": group.to_dict(),
+            "features": [f.to_dict() for f in features],
+            "summary": {
+                "total": total,
+                "passing": passing,
+                "in_progress": in_progress,
+                "remaining": total - passing
+            },
+            "is_complete": is_complete
+        }, indent=2)
+    finally:
+        session.close()
+
+
+@mcp.tool()
+def feature_complete_parallel_group(
+    group_id: Annotated[int, Field(description="ID of the parallel group to complete", ge=1)],
+    regression_passed: Annotated[bool, Field(description="Whether regression tests passed")] = True
+) -> str:
+    """Mark a parallel group as completed after all features are done.
+
+    Updates the group status and regression status. Should be called
+    after all features in the group are passing and regression tests
+    have been run.
+
+    Args:
+        group_id: ID of the parallel group
+        regression_passed: Whether regression tests passed (default True)
+
+    Returns:
+        JSON with updated group details
+    """
+    session = get_session()
+    try:
+        group = session.query(ParallelGroup).filter(ParallelGroup.id == group_id).first()
+
+        if group is None:
+            return json.dumps({"error": f"Parallel group {group_id} not found"})
+
+        # Update status
+        group.status = "completed"
+        group.regression_status = "passed" if regression_passed else "failed"
+        session.commit()
+        session.refresh(group)
+
+        return json.dumps({
+            "group": group.to_dict(),
+            "message": f"Parallel group {group_id} marked as completed"
+        }, indent=2)
+    finally:
+        session.close()
+
+
+@mcp.tool()
+def feature_abort_parallel_group(
+    group_id: Annotated[int, Field(description="ID of the parallel group to abort", ge=1)]
+) -> str:
+    """Abort a parallel group and release all features.
+
+    Marks the group as aborted and clears the in_progress status
+    of all features, returning them to the pending queue.
+
+    Use this when parallel execution needs to be cancelled.
+
+    Args:
+        group_id: ID of the parallel group to abort
+
+    Returns:
+        JSON with abort details and released features
+    """
+    session = get_session()
+    try:
+        group = session.query(ParallelGroup).filter(ParallelGroup.id == group_id).first()
+
+        if group is None:
+            return json.dumps({"error": f"Parallel group {group_id} not found"})
+
+        if group.status != "active":
+            return json.dumps({"error": f"Parallel group {group_id} is not active (status: {group.status})"})
+
+        # Get all features in the group
+        features = (
+            session.query(Feature)
+            .filter(Feature.parallel_group_id == group_id)
+            .all()
+        )
+
+        # Release features that aren't passing
+        released = []
+        for feature in features:
+            if not feature.passes:
+                feature.in_progress = False
+                feature.parallel_group_id = None
+                feature.dispatched_by = None
+                feature.dispatched_at = None
+                released.append(feature.id)
+
+        # Mark group as aborted
+        group.status = "aborted"
+        session.commit()
+        session.refresh(group)
+
+        return json.dumps({
+            "group": group.to_dict(),
+            "released_features": released,
+            "message": f"Parallel group {group_id} aborted, {len(released)} features released"
         }, indent=2)
     finally:
         session.close()

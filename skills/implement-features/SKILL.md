@@ -11,6 +11,8 @@ The `/implement-features` skill orchestrates the incremental implementation of f
 /implement-features --mode=<standard|yolo|hybrid>
 /implement-features --resume
 /implement-features --start-from=<feature-id>
+/implement-features --parallel
+/implement-features --parallel --max-agents=<n>
 ```
 
 **Parameters:**
@@ -19,6 +21,8 @@ The `/implement-features` skill orchestrates the incremental implementation of f
 - `--mode=hybrid` - Browser tests for critical categories only
 - `--resume` - Resume from last in-progress feature
 - `--start-from=<id>` - Start from specific feature ID
+- `--parallel` - Enable parallel feature dispatch (uses dispatch config)
+- `--max-agents=<n>` - Override max parallel agents (default: from config)
 
 ## Overview
 
@@ -36,6 +40,16 @@ This skill is invoked after `/new-project` has created a feature database. It im
 - Read progress notes for context from previous sessions
 - Check for in-progress features (cleanup if needed)
 - Display session summary
+
+### Phase 1.5: Dispatch Analysis (if --parallel or dispatch.enabled)
+- Load dispatch configuration from `.claude/memories/.dispatch-config.json`
+- Call `feature_get_parallelizable(limit=maxAgents)` to find parallel work
+- If parallelizable features found:
+  - Confirm with user (if `dispatch.mode == "confirm"`)
+  - Create parallel group via `feature_create_parallel_group()`
+  - Spawn sub-agents for parallelizable features
+  - Main agent continues with primary feature
+- See "Parallel Execution Mode" section below for full details
 
 ### Phase 2: Feature Loop
 For each feature:
@@ -198,6 +212,94 @@ feature_clear_in_progress(feature['id'])
 Browser testing for critical categories only:
 - **Always Browser Test:** A (Security), C (Data), D (Workflow), P (Payment)
 - **Lint Only:** B, E-O, Q-T
+
+## Parallel Execution Mode
+
+When `--parallel` is specified or `dispatch.featureDatabase.enabled` is true, features can be implemented in parallel using sub-agents.
+
+### How It Works
+
+1. **Analysis Phase**: Call `feature_get_parallelizable()` to find features that can safely run in parallel based on category compatibility
+2. **Group Creation**: Create a parallel group with `feature_create_parallel_group()`
+3. **Agent Dispatch**: Spawn sub-agents for parallelizable features
+4. **Monitoring**: Track progress with `feature_get_parallel_status()`
+5. **Completion**: Mark group complete with `feature_complete_parallel_group()`
+
+### Category Parallelization Rules
+
+| Rule | Description |
+|------|-------------|
+| Critical Categories | A (Security) and P (Payment) **never** parallelize |
+| Same Category | Features in same category run sequentially (shared files) |
+| Different Categories | Checked against compatibility matrix |
+
+### Parallel Workflow
+
+```
+/implement-features --parallel
+
+Session Init:
+├─ Progress: 45/92 features (48.9%)
+└─ Dispatch Analysis...
+
+Dispatch Proposal:
+├─ Primary (main agent): F-46 Product grid (Category F)
+├─ Sub-agent 1: F-48 User preferences (Category I)
+├─ Sub-agent 2: F-49 Help docs (Category S)
+└─ Deferred: F-47 Product list (Category F - same as primary)
+
+[Creating parallel group...]
+├─ Group ID: 5
+├─ Spawning 2 sub-agents...
+└─ Main agent continuing with F-46
+
+[Parallel execution in progress...]
+├─ Main: F-46 implementing...
+├─ Agent 1: F-48 implementing...
+└─ Agent 2: F-49 implementing...
+
+[Group complete - running shared regression...]
+└─ All features passing ✓
+```
+
+### MCP Tools for Parallel Execution
+
+```python
+# Find parallelizable features
+result = feature_get_parallelizable(limit=3)
+# Returns: { primary, parallelizable, deferred, analysis }
+
+# Create parallel group
+group = feature_create_parallel_group(
+    feature_ids=[46, 48, 49],
+    session_id="session-20260112-abc"
+)
+# Returns: { group, features }
+
+# Monitor progress
+status = feature_get_parallel_status(group_id=5)
+# Returns: { group, features, summary, is_complete }
+
+# Complete group after regression
+feature_complete_parallel_group(group_id=5, regression_passed=True)
+
+# Abort if needed
+feature_abort_parallel_group(group_id=5)
+```
+
+### Regression Strategy
+
+Configured via `dispatch.featureDatabase.regressionStrategy`:
+
+- **shared** (default): Run regression once after ALL parallel features complete
+- **independent**: Each sub-agent runs regression for their own feature
+
+### Continuous Dispatch
+
+After completing a parallel group:
+1. Call `feature_get_parallelizable()` again
+2. If more parallelizable features found, spawn new group
+3. Continue until all features are done or only serial work remains
 
 ## Checkpoint Protocol
 
