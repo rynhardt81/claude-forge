@@ -1,4 +1,5 @@
 # Claude Forge Framework .gitignore
+.claude/
 
 # Session files (transient, may contain sensitive context)
 memories/sessions/active/session-*.md
