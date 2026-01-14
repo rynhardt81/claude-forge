@@ -4,6 +4,96 @@ This file provides Claude Code with **mandatory operating instructions** for thi
 
 ---
 
+## ABSOLUTE GATES: NO CODE WITHOUT THESE
+
+**YOU CANNOT WRITE A SINGLE LINE OF CODE until ALL gates are passed.**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           MANDATORY GATES                                    │
+│                                                                              │
+│  Gate 1: SESSION ACTIVE                                                     │
+│  ────────────────────────                                                   │
+│  A session file MUST exist in .claude/memories/sessions/active/             │
+│  If no session file exists → CREATE ONE FIRST                               │
+│  You CANNOT proceed without an active session file                          │
+│                                                                              │
+│  Gate 2: EPICS AND TASKS EXIST                                              │
+│  ────────────────────────────                                               │
+│  For ANY development work, docs/tasks/registry.json MUST exist              │
+│  AND contain epics with tasks. If it doesn't exist:                         │
+│    → Run /new-project OR /new-project --current FIRST                       │
+│    → This creates PRD, ADRs, Epics, and Tasks                               │
+│  You CANNOT write code without a task to work on                            │
+│  Exception: Framework maintenance tasks in .claude/ directory               │
+│                                                                              │
+│  Gate 3: WORKING ON A SPECIFIC TASK                                         │
+│  ─────────────────────────────────                                          │
+│  You MUST be working on a specific task from the registry                   │
+│  Run /reflect resume T### to lock and work on a task                        │
+│  You CANNOT implement "features" without a task ID                          │
+│                                                                              │
+│  Gate 4: SKILL INVOKED (not remembered)                                     │
+│  ─────────────────────────────────────                                      │
+│  For development workflows, you MUST invoke the Skill tool                  │
+│  /new-feature, /fix-bug, /refactor → Use Skill tool                         │
+│  You CANNOT "remember" what a skill does and skip invocation                │
+│                                                                              │
+│  Gate 5: AGENT DELEGATED (for specialized work)                             │
+│  ─────────────────────────────────────────────                              │
+│  For specialized work, you MUST invoke the appropriate agent:               │
+│    - Security/Auth → @security-boss                                         │
+│    - Architecture → @architect                                              │
+│    - Testing → @quality-engineer                                            │
+│    - PRD/Scope → @project-manager                                           │
+│    - Task breakdown → @scrum-master                                         │
+│  You CANNOT do specialized work without the right agent                     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Gate Check Flow
+
+**EVERY time you receive a development request, run this check:**
+
+```
+User Request Received
+        │
+        ▼
+┌─────────────────────────┐
+│ Gate 1: Session Active? │──No──▶ CREATE SESSION FILE FIRST
+└───────────┬─────────────┘        Then return here
+            │ Yes
+            ▼
+┌─────────────────────────┐
+│ Gate 2: Registry exists │──No──▶ RUN /new-project FIRST
+│ with epics and tasks?   │        Then return here
+└───────────┬─────────────┘
+            │ Yes
+            ▼
+┌─────────────────────────┐
+│ Gate 3: Working on a    │──No──▶ RUN /reflect resume T### FIRST
+│ specific task?          │        Then return here
+└───────────┬─────────────┘
+            │ Yes
+            ▼
+┌─────────────────────────┐
+│ Gate 4: Skill invoked   │──No──▶ INVOKE SKILL TOOL FIRST
+│ (not from memory)?      │        Then return here
+└───────────┬─────────────┘
+            │ Yes
+            ▼
+┌─────────────────────────┐
+│ Gate 5: Right agent for │──No──▶ DELEGATE TO AGENT FIRST
+│ this type of work?      │        Then return here
+└───────────┬─────────────┘
+            │ Yes
+            ▼
+        PROCEED WITH WORK
+```
+
+---
+
 ## CRITICAL: Framework Compliance
 
 **THIS FRAMEWORK IS NON-OPTIONAL. YOU MUST FOLLOW IT.**
@@ -15,6 +105,8 @@ When this framework is present in a project's `.claude/` directory, you are **bo
 - Rationalize that "this is a simple task" to bypass requirements
 - Decide that the user "probably just wants you to code"
 - Trust your memory of skills instead of invoking them
+- Write code without epics and tasks defined first
+- Skip agent delegation for specialized work
 
 **If you think any of the following, STOP:**
 
@@ -27,6 +119,9 @@ When this framework is present in a project's `.claude/` directory, you are **bo
 | "This project is simple, I don't need all this" | You don't control what the user does | STOP. Follow protocol anyway. |
 | "Let me just check one thing first" | One thing leads to scope creep | STOP. Session protocol first. |
 | "I can update the session file later" | Delayed updates cause data loss | STOP. Update now. |
+| "I don't need an epic/task for this" | ALL work needs tasks | STOP. Create task first. |
+| "I can do this without the agent" | Agents ensure quality | STOP. Delegate to agent. |
+| "Let me start coding first" | Documentation before code | STOP. Gates first. |
 
 ---
 
@@ -143,7 +238,37 @@ You MUST complete the session start protocol before:
 
 **No exceptions.** Not even for "quick" tasks.
 
-### Rule 2: Never Modify Files Outside Declared Scope
+### Rule 2: Never Write Code Without Epics and Tasks
+
+You MUST have `docs/tasks/registry.json` with epics and tasks before:
+- Writing any code
+- Implementing any feature
+- Fixing any bug
+
+If no registry exists → Run `/new-project --current` FIRST.
+If no task for this work → @scrum-master creates it FIRST.
+
+### Rule 3: Never Skip Skill Invocation
+
+You MUST invoke skills via the Skill tool:
+- `/new-feature` for features
+- `/fix-bug` for bugs
+- `/refactor` for refactoring
+
+You CANNOT rely on memory. Skills evolve. Always invoke.
+
+### Rule 4: Never Skip Agent Delegation
+
+You MUST delegate to the appropriate agent:
+- @security-boss for security/auth/payments
+- @architect for architecture decisions
+- @project-manager for PRD/scope
+- @scrum-master for task breakdown
+- @quality-engineer for testing
+
+You CANNOT do specialized work without the right agent.
+
+### Rule 5: Never Modify Files Outside Declared Scope
 
 If you declared scope as `src/components/`, you CANNOT touch:
 - `src/lib/` (not in scope)
@@ -152,45 +277,54 @@ If you declared scope as `src/components/`, you CANNOT touch:
 
 To expand scope: Update session file first, re-check for conflicts.
 
-### Rule 3: Never Assume Requirements
+### Rule 6: Never Assume Requirements
 
 If the user's request is ambiguous:
 - ASK for clarification
 - Do NOT assume what they meant
 - Do NOT implement your interpretation
 
-### Rule 4: Always Invoke Skills Via Tool
-
-When a skill applies:
-- Use the Skill tool to invoke it
-- NEVER rely on memory of what a skill says
-- NEVER paraphrase or summarize skill content
-
-### Rule 5: Always Commit After Each Task
+### Rule 7: Always Commit After Each Task
 
 After completing each atomic task:
 - Commit the changes
 - Include task/feature ID in commit message
 - Do NOT batch multiple tasks into one commit
 
-### Rule 6: Never Skip Conflict Detection
+### Rule 8: Never Skip Conflict Detection
 
 Before modifying ANY file:
 - Check if another active session claims it
 - If conflict exists, STOP and notify user
 
-### Rule 7: Append-Only for Progress Notes
+### Rule 9: Append-Only for Progress Notes
 
 The file `.claude/memories/progress-notes.md`:
 - Is APPEND-ONLY
 - NEVER overwrite existing content
 - Always add new entries with `---` separator
 
-### Rule 8: Update Session File in Real-Time
+### Rule 10: Update Session File in Real-Time
 
 - Update "Working On" as you start tasks
 - Move to "Completed" as you finish
 - Do NOT wait until session end
+
+### Rule 11: Create Tasks for ALL Work
+
+Every piece of work MUST have a task ID:
+- New feature → Create task first
+- Bug fix → Create task first
+- Refactor → Create task first
+
+You CANNOT work without a task ID.
+
+### Rule 12: Epics MUST Have Tasks
+
+You CANNOT create an epic without tasks:
+- Epic creation → @scrum-master breaks into tasks
+- Empty epics are invalid
+- Every epic needs at least one task
 
 ---
 
@@ -389,9 +523,75 @@ Only runs Phase 0 (framework setup).
 
 ---
 
-## Task Management
+## MANDATORY: Epic/Task Creation Before Development
 
-### Epic/Task Structure
+**NO CODE without epics and tasks. This is a HARD GATE.**
+
+### The Rule
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      DOCUMENTATION BEFORE CODE                               │
+│                                                                              │
+│  Before ANY development work, you MUST have:                                │
+│                                                                              │
+│  1. docs/prd.md                  ← Product requirements document            │
+│  2. docs/tasks/registry.json     ← Task registry with epics and tasks       │
+│  3. docs/epics/E##-*/            ← Epic directories with task files         │
+│                                                                              │
+│  If these don't exist → RUN /new-project --current FIRST                    │
+│                                                                              │
+│  YOU CANNOT:                                                                 │
+│  - "Just add a quick feature" without a task                                │
+│  - "Fix this small bug" without a task                                      │
+│  - "Make this change" without a task                                        │
+│                                                                              │
+│  ALL work must be tracked. No exceptions.                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Epic/Task Creation Flow
+
+When user asks for development work and no registry exists:
+
+```
+User: "Add dark mode to the app"
+      │
+      ▼
+Check: Does docs/tasks/registry.json exist?
+      │
+      ├─ NO → "I need to set up the project structure first.
+      │        Running /new-project --current to create PRD,
+      │        architecture docs, and task breakdown."
+      │        Then invoke /new-project skill
+      │
+      └─ YES → Check: Is there a task for this work?
+               │
+               ├─ NO → "I need to create a task for this work.
+               │        @scrum-master: Add task for dark mode to registry"
+               │
+               └─ YES → Proceed with /reflect resume T###
+```
+
+### Epics Cannot Be Empty
+
+**Every epic MUST have tasks. Epics without tasks are invalid.**
+
+```
+VALID:
+docs/epics/E01-authentication/
+├── E01-authentication.md
+└── tasks/
+    ├── T001-setup-auth.md      ← At least one task
+    ├── T002-login-form.md
+    └── T003-session-mgmt.md
+
+INVALID:
+docs/epics/E01-authentication/
+└── E01-authentication.md       ← No tasks directory = INVALID
+```
+
+### Task Structure
 
 ```
 docs/epics/
@@ -431,6 +631,17 @@ Session 2: /reflect resume T010  # Works on dashboard (if no deps on T001)
 ```
 
 The registry and session files prevent conflicts.
+
+### Creating New Tasks Mid-Project
+
+When new work arises that doesn't fit existing tasks:
+
+1. **DO NOT** just start coding
+2. **DO** invoke @scrum-master to create the task:
+   ```
+   @scrum-master: Create new task for [description] in [epic]
+   ```
+3. **THEN** use /reflect resume T### to work on it
 
 ---
 
@@ -657,40 +868,119 @@ See `security/` directory for full documentation.
 
 ---
 
-## Agent Personas
+## MANDATORY: Agent Delegation
 
-| Agent | Description | When to Use |
-|-------|-------------|-------------|
-| @developer | Implementation, coding | Feature development |
-| @architect | System design, ADRs | Technical decisions |
-| @project-manager | PRD, scope, priorities | Project planning |
-| @scrum-master | Task breakdown, tracking | Sprint planning |
-| @quality-engineer | Testing, browser automation | Verification |
-| @security-boss | Security features, audits | Auth, payments |
+**You MUST delegate to the appropriate agent. This is NOT optional.**
 
-Invoke with `@agent-name`:
+### Agent Routing Table (MANDATORY)
+
+| Work Type | Agent | You MUST Delegate |
+|-----------|-------|-------------------|
+| Security, Auth, Payments | @security-boss | **YES - ALWAYS** |
+| Architecture decisions, ADRs | @architect | **YES - ALWAYS** |
+| PRD, requirements, scope | @project-manager | **YES - ALWAYS** |
+| Epic/task breakdown | @scrum-master | **YES - ALWAYS** |
+| Testing, QA, verification | @quality-engineer | **YES - ALWAYS** |
+| UI/UX decisions | @ux-designer | **YES - ALWAYS** |
+| Performance optimization | @performance-enhancer | **YES - ALWAYS** |
+| API testing, integration | @api-tester | **YES - ALWAYS** |
+| General implementation | @developer | YES (default) |
+
+### How to Delegate
+
+```markdown
+@agent-name: [task description]
+
+Example:
+@security-boss: Review and implement the authentication flow for T001
+@architect: Create ADR for database selection
+@scrum-master: Break down E01 into atomic tasks
 ```
-@developer implement the login form
-@architect review this design decision
+
+### Agent Delegation Violations
+
+**These are violations. You MUST NOT:**
+
+| Violation | Why It's Wrong | Correct Action |
+|-----------|----------------|----------------|
+| Implementing auth without @security-boss | Security requires expert review | @security-boss: implement auth |
+| Creating ADRs without @architect | Architecture decisions need rigor | @architect: create ADR |
+| Breaking down work without @scrum-master | Tasks may not be atomic | @scrum-master: break down epic |
+| Doing QA without @quality-engineer | Testing needs structured approach | @quality-engineer: verify feature |
+| Writing PRD without @project-manager | Scope needs proper definition | @project-manager: create PRD |
+
+---
+
+## MANDATORY: Skill Invocation
+
+**You MUST invoke skills via the Skill tool. You CANNOT rely on memory.**
+
+### Skill Invocation Rules
+
+1. **ALWAYS use the Skill tool** - Never paraphrase or summarize skills
+2. **Skills must be invoked, not remembered** - Skills evolve, memory is stale
+3. **Skill content guides execution** - Follow the skill exactly as invoked
+
+### Skill Routing Table (MANDATORY)
+
+| User Intent | Skill to Invoke | Via Tool |
+|-------------|-----------------|----------|
+| "Add a feature", "implement", "build" | `/new-feature` | Skill tool |
+| "Fix bug", "debug", "broken" | `/fix-bug` | Skill tool |
+| "Refactor", "clean up", "restructure" | `/refactor` | Skill tool |
+| "Create PR", "pull request" | `/create-pr` | Skill tool |
+| "Release", "new version" | `/release` | Skill tool |
+| "Resume", "continue work" | `/reflect resume` | Skill tool |
+| "New project", "initialize" | `/new-project` | Skill tool |
+| "Implement features" | `/implement-features` | Skill tool |
+
+### Skill Invocation Violations
+
+**These are violations. You MUST NOT:**
+
+| Violation | Why It's Wrong | Correct Action |
+|-----------|----------------|----------------|
+| "I know how /new-feature works" | Skills evolve. Memory is unreliable. | Invoke Skill tool |
+| Implementing without invoking skill | Skill provides workflow | Invoke skill FIRST |
+| Paraphrasing skill content | You may miss steps | Read invoked skill exactly |
+| Skipping skill "for simple tasks" | All tasks need workflow | Invoke skill regardless |
+
+### Skill vs Agent Relationship
+
+```
+User Request
+      │
+      ▼
+┌─────────────────────┐
+│ Invoke Skill First  │  ← /new-feature, /fix-bug, etc.
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│ Skill Invokes Agent │  ← Skill tells you which agent
+└──────────┬──────────┘
+           │
+           ▼
+┌─────────────────────┐
+│ Agent Does Work     │  ← @developer, @security-boss, etc.
+└─────────────────────┘
 ```
 
 ---
 
-## Skills System
+## Skills Reference
 
-**CRITICAL: Always use the Skill tool to invoke skills. Never rely on memory.**
-
-| Skill | Purpose |
-|-------|---------|
-| `/reflect` | Session management and continuity |
-| `/new-project` | Project initialization |
-| `/migrate` | Migrate existing project to Claude Forge |
-| `/new-feature` | Feature development workflow |
-| `/fix-bug` | Bug fixing workflow |
-| `/refactor` | Code refactoring workflow |
-| `/create-pr` | Pull request creation |
-| `/release` | Version release |
-| `/implement-features` | Autonomous feature implementation |
+| Skill | Purpose | Agents Used |
+|-------|---------|-------------|
+| `/reflect` | Session management and continuity | - |
+| `/new-project` | Project initialization | @analyst, @project-manager, @architect, @scrum-master |
+| `/migrate` | Migrate existing project to Claude Forge | @analyst |
+| `/new-feature` | Feature development workflow | @developer, specialized agents as needed |
+| `/fix-bug` | Bug fixing workflow | @developer, @quality-engineer |
+| `/refactor` | Code refactoring workflow | @developer, @quality-engineer |
+| `/create-pr` | Pull request creation | @developer |
+| `/release` | Version release | @developer |
+| `/implement-features` | Autonomous feature implementation | Multiple agents by category |
 
 ---
 

@@ -2,38 +2,34 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/validate-edit.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/gate-check.sh\"",
+            "timeout": 5
+          },
           {
             "type": "command",
-            "command": "echo 'File modified: check formatting if needed'",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/validate-edit.sh\"",
             "timeout": 5
           }
         ]
       }
     ],
+    "PostToolUse": [],
     "SessionStart": [
       {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '=== Session Started ===' && date",
-            "timeout": 5
-          }
-        ]
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-context.sh\"",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-end.sh\"",
+        "timeout": 10
       }
     ]
   }
