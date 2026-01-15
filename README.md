@@ -45,13 +45,15 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 **Claude Forge** enables structured, safe, autonomous development by providing:
 
 - **Task Management** - Epic/task tracking with dependencies for parallel work
-- **Agent Personas** - Specialized agents for different roles (developer, architect, PM, etc.)
+- **Agent Personas** - 15 specialized agents for different roles (developer, architect, PM, etc.)
 - **Skills** - Reusable workflows for common tasks (features, bugs, refactoring, PRs)
 - **Templates** - Standardized document formats (PRD, ADR, epics, tasks)
+- **Hook Enforcement** - Mandatory gates enforced via Claude Code hooks (not advisory)
 - **Security Model** - Safe autonomous operation with command allowlists
 - **Session Continuity** - Context preservation and minimal-context resume
 - **Autonomous Development** - Full project implementation from idea to code
 - **Intelligent Dispatch** - Automatic sub-agent parallelization and intent detection
+- **Token Optimization** - On-demand loading of tools and references to preserve context
 
 ---
 
@@ -548,17 +550,22 @@ done
 │   ├── migrate.sh               # Unix/Mac migration script
 │   └── migrate.ps1              # Windows PowerShell migration script
 │
-├── agents/                      # Full agent personas
-│   ├── orchestrator.md          # Workflow coordination
-│   ├── analyst.md               # Requirements discovery
+├── agents/                      # Full agent personas (15 agents)
+│   ├── security-boss.md         # Security, auth, payments
 │   ├── architect.md             # System design, ADRs
-│   ├── developer.md             # Code implementation
-│   ├── quality-engineer.md      # Testing, code review
-│   ├── security-boss.md         # Security audits
-│   ├── devops.md                # CI/CD, deployment
 │   ├── project-manager.md       # PRDs, scope management
-│   ├── scrum-master.md          # Sprint planning, features
-│   └── ux-designer.md           # User flows, wireframes
+│   ├── scrum-master.md          # Sprint planning, task breakdown
+│   ├── quality-engineer.md      # Testing, code review
+│   ├── developer.md             # Code implementation
+│   ├── analyst.md               # Requirements discovery
+│   ├── devops.md                # CI/CD, deployment
+│   ├── performance-enhancer.md  # Profiling, optimization
+│   ├── api-tester.md            # Load testing, API contracts
+│   ├── ux-designer.md           # User flows, wireframes
+│   ├── visual-mistro.md         # Diagrams, charts
+│   ├── whimsy.md                # Animations, micro-interactions
+│   ├── ceo.md                   # Strategic decisions
+│   └── orchestrator.md          # Workflow coordination
 │
 ├── skills/                      # Workflow skills
 │   ├── reflect/                 # Session continuity & task mgmt
@@ -578,8 +585,17 @@ done
 │   ├── pdf/                     # PDF processing
 │   └── ...
 │
+├── hooks/                       # Claude Code hooks
+│   ├── gate-check.sh            # Blocks code writes without session/registry
+│   ├── validate-edit.sh         # Blocks .env, lock files, .git/
+│   ├── session-context.sh       # Shows status on session start
+│   ├── session-end.sh           # Cleanup on session end
+│   ├── settings.example.json    # Hooks-only settings template
+│   └── README.md                # Hook documentation
+│
 ├── templates/                   # Document templates
 │   ├── CLAUDE.template.md       # CLAUDE.md template
+│   ├── settings.json            # Full settings (hooks + permissions + MCP)
 │   ├── prd.md                   # Product Requirements
 │   ├── epic-minimal.md          # Epic template
 │   ├── task.md                  # Task template
@@ -648,16 +664,25 @@ docs/                            # Project documentation (created by /new-projec
 
 ### Agents
 
+Agents are invoked with `@agent-name: [task]`. They are NOT automatic - you must route work to them.
+
 | Agent | Role | When to Use |
 |-------|------|-------------|
-| @orchestrator | Workflow coordination | Complex multi-step tasks |
-| @analyst | Requirements discovery | New features, understanding needs |
+| @security-boss | Security | Auth, payments, security-sensitive code |
 | @architect | System design | Architecture decisions, ADRs |
-| @developer | Implementation | Writing code |
-| @quality-engineer | Testing | Code review, test coverage |
-| @security-boss | Security | Auth, permissions, audits |
-| @project-manager | Planning | PRDs, scope, priorities |
+| @project-manager | Planning | PRDs, scope, requirements |
 | @scrum-master | Sprint management | Task breakdown, tracking |
+| @quality-engineer | Testing | Test strategy, verification |
+| @developer | Implementation | Writing code (default) |
+| @analyst | Requirements discovery | User research, problem analysis |
+| @devops | Infrastructure | CI/CD, Docker, K8s, deployment |
+| @performance-enhancer | Performance | Profiling, optimization |
+| @api-tester | API testing | Load testing, API contracts |
+| @ux-designer | UX/UI design | User flows, wireframes |
+| @visual-mistro | Visuals | Diagrams, charts, architecture visuals |
+| @whimsy | Micro-interactions | Animations, delightful touches |
+| @ceo | Strategy | Go/no-go decisions, prioritization |
+| @orchestrator | Workflow coordination | Unsure which agent to use |
 
 ### Templates
 
@@ -769,6 +794,24 @@ echo "No previous session." > .claude/memories/sessions/latest.md
 ls -la .claude/CLAUDE.md
 ```
 
+### Hooks not enforcing gates
+
+**Check:** Is `settings.json` configured?
+```bash
+ls -la .claude/settings.json
+```
+
+**Fix:** Install hooks:
+```bash
+chmod +x .claude/hooks/*.sh
+cp .claude/templates/settings.json .claude/settings.json
+```
+
+**Verify:** Test gate-check (should exit with code 2):
+```bash
+echo '{"tool_input":{"file_path":"test.js"}}' | bash .claude/hooks/gate-check.sh
+```
+
 ### Task registry not found
 
 **Check:** Did you run `/new-project`?
@@ -782,10 +825,18 @@ ls docs/tasks/registry.json
 
 ## Version
 
-**Framework Version:** 1.4.0
-**Last Updated:** 2026-01-12
+**Framework Version:** 1.5.0
+**Last Updated:** 2026-01-15
 
 ### Changelog
+
+**v1.5.0** (2026-01-15)
+- Added hook enforcement system for mandatory gates (not advisory)
+- Added `templates/settings.json` with hooks, permissions, and MCP servers
+- Added all 15 agents to CLAUDE.md routing table
+- Added TOKEN OPTIMIZATION section for on-demand loading
+- Fixed hooks format for SessionStart/Stop (matcher required)
+- Updated `/new-project` and `/migrate` skills to install hooks automatically
 
 **v1.4.0** (2026-01-12)
 - Added Intelligent Dispatch System for automatic sub-agent parallelization
