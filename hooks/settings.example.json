@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "hooks": {
     "PreToolUse": [
       {
@@ -6,12 +7,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/gate-check.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-check.sh\"",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/validate-edit.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-edit.sh\"",
             "timeout": 5
           }
         ]
@@ -20,16 +21,26 @@
     "PostToolUse": [],
     "SessionStart": [
       {
-        "type": "command",
-        "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-context.sh\"",
-        "timeout": 5
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.sh\"",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "type": "command",
-        "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-end.sh\"",
-        "timeout": 10
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }

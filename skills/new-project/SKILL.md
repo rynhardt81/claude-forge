@@ -160,12 +160,89 @@ rm .claude/reference/01-system-overview.template.md
 
 This ensures only the active documents remain, avoiding confusion between templates and project-specific content.
 
-### 0.6 Initialize Git (if not exists)
+### 0.6 Install Enforcement Hooks (CRITICAL)
+
+**This step is CRITICAL for framework enforcement. Do NOT skip it.**
+
+The hooks system enforces the mandatory gates defined in CLAUDE.md. Without hooks, gates are advisory only.
+
+**Steps:**
+
+1. **Ensure hooks scripts are executable:**
+```bash
+chmod +x .claude/hooks/*.sh
+```
+
+2. **Create settings.json from template:**
+```bash
+# Use the comprehensive template (includes hooks, permissions, MCP servers)
+cp .claude/templates/settings.json .claude/settings.json
+
+# Or use the hooks-only template if you want to customize permissions separately
+# cp .claude/hooks/settings.example.json .claude/settings.json
+```
+
+3. **Verify hooks are correctly configured:**
+
+The `.claude/settings.json` should contain:
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-check.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-edit.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.sh\"",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh\"",
+        "timeout": 10
+      }
+    ]
+  }
+}
+```
+
+**What the hooks do:**
+
+| Hook | Trigger | Effect |
+|------|---------|--------|
+| `gate-check.sh` | Before Edit/Write | Blocks code writes if no session or no registry |
+| `validate-edit.sh` | Before Edit/Write | Blocks edits to protected files (.env, locks, etc.) |
+| `session-context.sh` | Session start | Outputs compact status (session, tasks, gates) |
+| `session-end.sh` | Session end | Updates session file, moves to completed/ |
+
+**If hooks fail to install:**
+- Framework will still work, but gates will be advisory only
+- Claude may skip session protocol without being blocked
+- Document the issue and proceed with verbal enforcement
+
+### 0.7 Initialize Git (if not exists)
 
 - `git init`
 - Initial commit with framework files
 
-### 0.7 Update Progress Notes
+### 0.8 Update Progress Notes
 
 After Phase 0 completes, update `.claude/memories/progress-notes.md`:
 
@@ -198,7 +275,7 @@ Framework initialized for [PROJECT_NAME].
 3. Continue to architecture and feature planning
 ```
 
-### 0.8 Phase 0 Checkpoint
+### 0.9 Phase 0 Checkpoint
 
 Display checkpoint:
 ```
@@ -208,12 +285,21 @@ Display checkpoint:
 ✅ CLAUDE.md customized
 ✅ Memories initialized
 ✅ Reference templates ready
+✅ Enforcement hooks installed
 ✅ Progress notes updated
+
+**Hooks Status:**
+- gate-check.sh: Active (blocks code writes without session/registry)
+- validate-edit.sh: Active (protects .env, lock files)
+- session-context.sh: Active (provides status on session start)
+- session-end.sh: Active (cleanup on session end)
 
 **Next: Phase 1 - Requirements Discovery**
 
-The framework is set up. Now let's create the documentation
-that makes AI-assisted development effective.
+The framework is set up with ENFORCEMENT enabled.
+Claude will be BLOCKED from writing code without:
+1. An active session file
+2. A task registry with tasks
 
 Continue to create PRD and architecture documentation?
 ```

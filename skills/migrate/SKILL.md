@@ -442,7 +442,81 @@ The following files from your old configuration weren't recognized:
    ...
 ```
 
-### 3.7 Checkpoint: Content Migrated
+### 3.7 Install Enforcement Hooks (CRITICAL)
+
+**This step is CRITICAL for framework enforcement. Do NOT skip it.**
+
+The hooks system enforces the mandatory gates. Without hooks installed, Claude can bypass the session and task requirements.
+
+**Steps:**
+
+1. **Make hook scripts executable:**
+```bash
+chmod +x .claude/hooks/*.sh
+```
+
+2. **Create settings.json from template:**
+```bash
+# Check if user has existing settings to merge
+if [ -f ".claude_old/settings.json" ] || [ -f ".claude_old/settings.local.json" ]; then
+    echo "Found existing settings - will merge hooks into existing config"
+    # Merge hooks into existing settings (see step 3)
+else
+    # Fresh install - use comprehensive template
+    cp .claude/templates/settings.json .claude/settings.json
+fi
+```
+
+3. **Merge hooks with existing settings (if applicable):**
+
+If the user has existing settings, add the hooks section while preserving their other settings (permissions, etc.):
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-check.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.sh\"",
+        "timeout": 5
+      }
+    ]
+  },
+  "permissions": {
+    // ... preserve existing permissions
+  }
+}
+```
+
+4. **Verify hooks are working:**
+```bash
+# Test gate-check (should fail with no session)
+echo '{"tool_input":{"file_path":"test.js"}}' | bash .claude/hooks/gate-check.sh
+# Expected: Exit code 2, "GATE:BLOCKED" message
+```
+
+**What the hooks do:**
+
+| Hook | When | Effect |
+|------|------|--------|
+| `gate-check.sh` | Before code writes | Blocks if no session or no task registry |
+| `validate-edit.sh` | Before code writes | Blocks edits to .env, lock files, .git/ |
+| `session-context.sh` | Session start | Shows compact status (session, tasks, gates) |
+| `session-end.sh` | Session end | Updates session file, moves to completed/ |
+
+### 3.8 Checkpoint: Content Migrated
 
 ```
 ## Phase 3 Complete: Content Migrated

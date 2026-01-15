@@ -409,11 +409,18 @@ If browser automation enabled:
    - .NET project: dotnet
    - Always: git, ls, cat, grep, ps, lsof
 
-3. Set up pre-tool-use hooks:
-   - Configure in CLAUDE.md
-   - Reference security validation function
+3. Install enforcement hooks (CRITICAL for gate enforcement):
+   - Make hooks executable: chmod +x .claude/hooks/*.sh
+   - Copy settings template: cp .claude/hooks/settings.example.json .claude/settings.json
+   - Hooks enforce: session requirement, task registry requirement
+   - See hooks/README.md for details
 
-4. Test security validation:
+4. Test hook installation:
+   - Test gate-check: Should block code writes without session
+   - Test validate-edit: Should block .env edits
+   - Test session-context: Should output status on session start
+
+5. Test security validation:
    - Try allowed command: Should pass
    - Try blocked command: Should fail with clear message
 ```

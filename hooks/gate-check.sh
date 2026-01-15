@@ -11,8 +11,23 @@
 # - 2: Gate failed, block the operation (message shown to Claude)
 #
 # Token-optimized: Outputs minimal text to preserve context window
+#
+# NOTE: When deployed to a target project, this script lives at:
+#   {project}/.claude/hooks/gate-check.sh
+# And the memories/sessions are at:
+#   {project}/.claude/memories/sessions/active/
 
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+# Determine if we're in the framework repo itself or a deployed project
+# Framework repo has hooks/ at root level, deployed projects have .claude/hooks/
+if [ -d "$PROJECT_ROOT/.claude/memories" ]; then
+    # Deployed to a project - use .claude/ prefix
+    CLAUDE_DIR="$PROJECT_ROOT/.claude"
+else
+    # Running in framework repo - no prefix
+    CLAUDE_DIR="$PROJECT_ROOT"
+fi
 
 # Read JSON input from stdin
 INPUT=$(cat)
@@ -33,7 +48,7 @@ fi
 
 # Gate 1: Check for active session
 check_session() {
-    if ls "$PROJECT_ROOT/.claude/memories/sessions/active/"session-*.md 1>/dev/null 2>&1; then
+    if ls "$CLAUDE_DIR/memories/sessions/active/"session-*.md 1>/dev/null 2>&1; then
         return 0
     fi
     return 1

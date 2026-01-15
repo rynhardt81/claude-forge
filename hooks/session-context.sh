@@ -8,13 +8,23 @@
 # - Gate reminder
 #
 # Token-optimized: ~100 tokens max output
+#
+# NOTE: When deployed to a target project, this script lives at:
+#   {project}/.claude/hooks/session-context.sh
 
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+# Determine if we're in the framework repo itself or a deployed project
+if [ -d "$PROJECT_ROOT/.claude/memories" ]; then
+    CLAUDE_DIR="$PROJECT_ROOT/.claude"
+else
+    CLAUDE_DIR="$PROJECT_ROOT"
+fi
 
 echo "=== FORGE ==="
 
 # Session status
-ACTIVE_SESSION=$(ls "$PROJECT_ROOT/.claude/memories/sessions/active/"session-*.md 2>/dev/null | head -1)
+ACTIVE_SESSION=$(ls "$CLAUDE_DIR/memories/sessions/active/"session-*.md 2>/dev/null | head -1)
 if [ -n "$ACTIVE_SESSION" ]; then
     SID=$(basename "$ACTIVE_SESSION" .md | sed 's/session-//')
     echo "S:$SID"

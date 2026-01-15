@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "Claude Forge settings template - copy to .claude/settings.json when deploying",
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-check.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-edit.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(pnpm:*)",
+      "Bash(yarn:*)",
+      "Bash(node:*)",
+      "Bash(bun:*)",
+      "Bash(deno:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip:*)",
+      "Bash(pip3:*)",
+      "Bash(poetry:*)",
+      "Bash(pytest:*)",
+      "Bash(go:*)",
+      "Bash(cargo:*)",
+      "Bash(rustc:*)",
+      "Bash(dotnet:*)",
+      "Bash(mvn:*)",
+      "Bash(gradle:*)",
+      "Bash(make:*)",
+      "Bash(cmake:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(kubectl:*)",
+      "Bash(terraform:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(which:*)",
+      "Bash(whoami:*)",
+      "Bash(uname:*)",
+      "Bash(date:*)",
+      "Bash(env:*)",
+      "Bash(printenv:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(diff:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Bash(jq:*)",
+      "Bash(yq:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(rsync:*)",
+      "Bash(tar:*)",
+      "Bash(unzip:*)",
+      "Bash(zip:*)",
+      "Bash(gzip:*)",
+      "Bash(gunzip:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(chmod +x:*)",
+      "Bash(ps:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(sleep:*)",
+      "Bash(timeout:*)",
+      "Bash(time:*)",
+      "Bash(watch:*)",
+      "Bash(eslint:*)",
+      "Bash(prettier:*)",
+      "Bash(tsc:*)",
+      "Bash(vite:*)",
+      "Bash(vitest:*)",
+      "Bash(jest:*)",
+      "Bash(mocha:*)",
+      "Bash(playwright:*)",
+      "Bash(cypress:*)",
+      "Bash(turbo:*)",
+      "Bash(nx:*)",
+      "Bash(lerna:*)",
+      "Bash(changeset:*)",
+      "Bash(husky:*)",
+      "Bash(lint-staged:*)",
+      "Bash(commitlint:*)",
+      "Bash(semantic-release:*)",
+      "Bash(gh:*)",
+      "Bash(vercel:*)",
+      "Bash(netlify:*)",
+      "Bash(flyctl:*)",
+      "Bash(railway:*)",
+      "Bash(supabase:*)",
+      "Bash(prisma:*)",
+      "Bash(drizzle-kit:*)",
+      "Bash(sqlite3:*)",
+      "Bash(psql:*)",
+      "Bash(mysql:*)",
+      "Bash(mongosh:*)",
+      "Bash(redis-cli:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf /)",
+      "Bash(chmod 777:*)",
+      "Bash(chmod -R 777:*)",
+      "Bash(sudo:*)",
+      "Bash(su:*)",
+      "Bash(passwd:*)",
+      "Bash(chown:*)",
+      "Bash(chgrp:*)",
+      "Bash(mkfs:*)",
+      "Bash(fdisk:*)",
+      "Bash(dd:*)",
+      "Bash(systemctl:*)",
+      "Bash(service:*)",
+      "Bash(init:*)",
+      "Bash(shutdown:*)",
+      "Bash(reboot:*)",
+      "Bash(halt:*)",
+      "Bash(poweroff:*)"
+    ]
+  },
+
+  "mcpServers": {
+    "_comment": "MCP servers for autonomous development - uncomment as needed",
+
+    "feature-tracking": {
+      "command": "python",
+      "args": ["-m", ".claude.mcp-servers.feature-tracking.server"],
+      "env": {
+        "PROJECT_DIR": "${CLAUDE_PROJECT_DIR}/.claude/features"
+      },
+      "disabled": true
+    },
+
+    "browser-automation": {
+      "command": "npx",
+      "args": ["@anthropic-ai/mcp-playwright@latest"],
+      "disabled": true
+    }
+  }
+}

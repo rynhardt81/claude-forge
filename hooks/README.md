@@ -10,6 +10,41 @@ Hooks are shell scripts that execute in response to Claude Code events. They ena
 - File protection for sensitive files
 - Custom notifications and validation
 
+**CRITICAL:** Without hooks installed, the framework's gates are ADVISORY ONLY. Claude can bypass session and task requirements. Hooks make enforcement MANDATORY.
+
+## Installation (REQUIRED)
+
+When the framework is deployed to a target project, hooks MUST be installed:
+
+```bash
+# 1. Make hooks executable
+chmod +x .claude/hooks/*.sh
+
+# 2. Create settings.json from comprehensive template
+# (includes hooks, permissions, and MCP server configs)
+cp .claude/templates/settings.json .claude/settings.json
+
+# Or use hooks-only template:
+# cp .claude/hooks/settings.example.json .claude/settings.json
+
+# 3. Verify hooks are working (should return exit code 2)
+echo '{"tool_input":{"file_path":"test.js"}}' | bash .claude/hooks/gate-check.sh
+# Expected: Exit 2, "GATE:BLOCKED[12]" (no session, no registry)
+```
+
+**The `/new-project` and `/migrate` skills do this automatically.** If hooks aren't working, install manually using the steps above.
+
+## Settings Templates
+
+Two templates are available:
+
+| Template | Location | Contents |
+|----------|----------|----------|
+| **Comprehensive** | `templates/settings.json` | Hooks + Permissions + MCP servers |
+| **Hooks-only** | `hooks/settings.example.json` | Just hooks configuration |
+
+The comprehensive template is recommended for most projects.
+
 ## Hook Configuration
 
 Hooks are configured in `.claude/settings.json` or `.claude/settings.local.json`:
@@ -73,7 +108,7 @@ Runs when session ends:
 Copy the example settings file to your project's `.claude/` directory:
 
 ```bash
-cp hooks/settings.example.json .claude/settings.json
+cp .claude/hooks/settings.example.json .claude/settings.json
 ```
 
 ### Option 2: Manual configuration
@@ -82,6 +117,7 @@ Add to `.claude/settings.json`:
 
 ```json
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "hooks": {
     "PreToolUse": [
       {
@@ -89,12 +125,12 @@ Add to `.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/gate-check.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/gate-check.sh\"",
             "timeout": 5
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/validate-edit.sh\"",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validate-edit.sh\"",
             "timeout": 5
           }
         ]
@@ -102,9 +138,14 @@ Add to `.claude/settings.json`:
     ],
     "SessionStart": [
       {
-        "type": "command",
-        "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/session-context.sh\"",
-        "timeout": 5
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-context.sh\"",
+            "timeout": 5
+          }
+        ]
       }
     ]
   }
