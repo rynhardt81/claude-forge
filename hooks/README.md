@@ -101,6 +101,25 @@ Runs when session ends:
 - Moves session to completed/
 - Appends to progress notes
 
+### pre-compact.sh (Context Preservation)
+
+**Saves session state before context compaction.** Triggered when:
+- **Auto**: Context window is full and auto-compact runs
+- **Manual**: User runs `/compact` command
+
+Actions prompted:
+- Save current work state to session file
+- Append pre-compact snapshot to progress notes
+- Add continuation context to task registry
+- Commit any safe-to-commit changes as WIP checkpoint
+
+Output:
+```
+PRE-COMPACT: Before context is compacted, you MUST save critical state.
+COMPACT-TRIGGER: AUTO (context window full)
+ACTION: Save state immediately - compaction is imminent
+```
+
 ## Setting Up Hooks
 
 ### Option 1: Use provided settings template (Recommended)
@@ -197,13 +216,18 @@ echo "->Session required"
 
 ## Hook Events
 
-| Event | When | Use Case |
-|-------|------|----------|
-| PreToolUse | Before tool executes | Gate enforcement, validation |
-| PostToolUse | After tool completes | Formatting, logging |
-| Stop | When Claude stops | Cleanup, notifications |
-| SessionStart | Session begins | Minimal context loading |
-| SessionEnd | Session ends | State saving |
+| Event | When | Matcher Values | Use Case |
+|-------|------|----------------|----------|
+| PreToolUse | Before tool executes | Tool names (`Edit`, `Write`, `Bash`) | Gate enforcement, validation |
+| PostToolUse | After tool completes | Tool names | Formatting, logging |
+| PermissionRequest | Permission dialog shown | Tool names | Custom permission handling |
+| UserPromptSubmit | User submits prompt | None | Input validation |
+| Notification | Notification sent | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` | Custom notifications |
+| Stop | When Claude stops | `*` | Cleanup, session archiving |
+| SubagentStop | When subagent finishes | `*` | Subagent cleanup |
+| PreCompact | Before context compaction | `auto`, `manual` | **State preservation** |
+| SessionStart | Session begins | `startup`, `resume`, `clear`, `compact` | Context loading |
+| SessionEnd | Session terminates | None | Final state saving |
 
 ## Gate Enforcement
 

@@ -588,8 +588,9 @@ done
 ├── hooks/                       # Claude Code hooks
 │   ├── gate-check.sh            # Blocks code writes without session/registry
 │   ├── validate-edit.sh         # Blocks .env, lock files, .git/
-│   ├── session-context.sh       # Shows status on session start
+│   ├── session-context.sh       # Shows status on session start/resume/compact
 │   ├── session-end.sh           # Cleanup on session end
+│   ├── pre-compact.sh           # Saves state before context compaction
 │   ├── settings.example.json    # Hooks-only settings template
 │   └── README.md                # Hook documentation
 │
@@ -837,6 +838,8 @@ ls docs/tasks/registry.json
 - Added TOKEN OPTIMIZATION section for on-demand loading
 - Fixed hooks format for SessionStart/Stop (matcher required)
 - Updated `/new-project` and `/migrate` skills to install hooks automatically
+- Added `pre-compact.sh` hook for saving state before context compaction
+- Added SessionStart matchers for `resume`, `compact`, and `clear` events
 
 **v1.4.0** (2026-01-12)
 - Added Intelligent Dispatch System for automatic sub-agent parallelization
