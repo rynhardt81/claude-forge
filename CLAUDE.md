@@ -79,6 +79,7 @@ User Request → Gate 1 (Session?) → Gate 2 (Registry?) → Gate 3 (Task?) →
 | `.claude/memories/progress-notes.md` | Append-only session log |
 | `docs/tasks/registry.json` | Task/epic registry |
 | `docs/epics/` | Epic and task files |
+| `docs/project-memory/` | Project knowledge (bugs, decisions, patterns) |
 
 ### Agent Routing (MANDATORY)
 
@@ -111,6 +112,7 @@ Agents are invoked with `@agent-name: [task]`. They are NOT automatic - you must
 | Refactor, clean up | `/refactor` |
 | Create PR | `/create-pr` |
 | Resume work | `/reflect resume` |
+| Remember, capture knowledge | `/remember` |
 
 ---
 
@@ -138,6 +140,9 @@ Agents are invoked with `@agent-name: [task]`. They are NOT automatic - you must
 | Implementing features | Skill invocation + agent delegation |
 | Security work | Security model |
 | Parallel work | Parallel sessions + dispatch |
+| Bug fix work | Project memory (bugs.md primary) |
+| Feature implementation | Project memory (patterns.md + decisions.md) |
+| Architecture decisions | Project memory (decisions.md primary) |
 
 ### What NOT to Do
 
