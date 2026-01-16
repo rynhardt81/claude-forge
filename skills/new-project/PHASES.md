@@ -517,6 +517,32 @@ Template:
   [Will be populated during implementation]
 ```
 
+### 4.8 Create Project Memory Structure
+
+Initialize the project memory system for capturing bugs, decisions, and patterns.
+
+**Actions:**
+
+1. Create directory:
+   ```bash
+   mkdir -p docs/project-memory
+   ```
+
+2. Copy templates:
+   ```bash
+   cp templates/project-memory/bugs.md docs/project-memory/
+   cp templates/project-memory/decisions.md docs/project-memory/
+   cp templates/project-memory/key-facts.md docs/project-memory/
+   cp templates/project-memory/patterns.md docs/project-memory/
+   ```
+
+3. Optionally populate key-facts.md with discovered project information:
+   - Environment URLs
+   - Detected conventions from existing code
+   - Key dependencies
+
+**Note:** The archive.db is NOT created here - it's created on first use via `/remember archive` or `/remember init-archive`.
+
 **Exit Conditions:**
 - ✅ Project scaffolded
 - ✅ Dependencies installed
@@ -525,6 +551,7 @@ Template:
 - ✅ init.sh created and tested
 - ✅ Testing mode configured
 - ✅ Dispatch config initialized
+- ✅ Project memory structure created
 
 ---
 

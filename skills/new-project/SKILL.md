@@ -147,7 +147,33 @@ This phase runs for ALL projects:
 └── progress-notes.md
 ```
 
-### 0.5 Initialize Reference Documents
+### 0.5 Initialize Project Memory Structure
+
+Create the project memory system for capturing bugs, decisions, and patterns.
+
+**Actions:**
+
+1. Create directory:
+```bash
+mkdir -p docs/project-memory
+```
+
+2. Copy templates:
+```bash
+cp templates/project-memory/bugs.md docs/project-memory/
+cp templates/project-memory/decisions.md docs/project-memory/
+cp templates/project-memory/key-facts.md docs/project-memory/
+cp templates/project-memory/patterns.md docs/project-memory/
+```
+
+3. Optionally populate key-facts.md with discovered project information:
+   - Environment URLs
+   - Detected conventions from existing code
+   - Key dependencies
+
+**Note:** The archive.db is NOT created here - it's created on first use via `/remember archive` or `/remember init-archive`.
+
+### 0.6 Initialize Reference Documents
 
 - Copy templates from `.claude/reference/` removing `.template` suffix
 - **Delete the original `.template.md` files after copying**
@@ -160,7 +186,7 @@ rm .claude/reference/01-system-overview.template.md
 
 This ensures only the active documents remain, avoiding confusion between templates and project-specific content.
 
-### 0.6 Install Enforcement Hooks (CRITICAL)
+### 0.7 Install Enforcement Hooks (CRITICAL)
 
 **This step is CRITICAL for framework enforcement. Do NOT skip it.**
 
@@ -237,12 +263,12 @@ The `.claude/settings.json` should contain:
 - Claude may skip session protocol without being blocked
 - Document the issue and proceed with verbal enforcement
 
-### 0.7 Initialize Git (if not exists)
+### 0.8 Initialize Git (if not exists)
 
 - `git init`
 - Initial commit with framework files
 
-### 0.8 Update Progress Notes
+### 0.9 Update Progress Notes
 
 After Phase 0 completes, update `.claude/memories/progress-notes.md`:
 
@@ -275,7 +301,7 @@ Framework initialized for [PROJECT_NAME].
 3. Continue to architecture and feature planning
 ```
 
-### 0.9 Phase 0 Checkpoint
+### 0.10 Phase 0 Checkpoint
 
 Display checkpoint:
 ```
@@ -284,6 +310,7 @@ Display checkpoint:
 ✅ .claude/ structure created
 ✅ CLAUDE.md customized
 ✅ Memories initialized
+✅ Project memory structure created (docs/project-memory/)
 ✅ Reference templates ready
 ✅ Enforcement hooks installed
 ✅ Progress notes updated
