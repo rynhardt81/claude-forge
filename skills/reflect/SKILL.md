@@ -104,11 +104,33 @@ git status --short
    - `.claude/memories/general.md` - Project preferences
    - `.claude/memories/sessions/completed/` - Recent completed sessions
 
-4. **Read Task Registry**
+4. **Load Project Memory (if exists)**
+   - Check if `docs/project-memory/` exists
+   - If yes:
+     a. Always load `key-facts.md` (full file, ~300 tokens)
+     b. Determine task type from registry/context:
+        - Keywords in task title: "fix", "bug" → bug fix
+        - Keywords: "add", "implement", "feature" → feature
+        - Keywords: "refactor", "clean" → refactor
+        - Keywords: "architecture", "design" → architecture
+     c. Load relevant memories per loading strategy:
+
+        | Task Type | Primary | Secondary |
+        |-----------|---------|-----------|
+        | bug/fix | bugs.md | decisions.md |
+        | feature | patterns.md | decisions.md |
+        | architecture | decisions.md | patterns.md |
+        | refactor | patterns.md | bugs.md |
+
+     d. Load primary category (ToC scan + keyword matches)
+     e. Load secondary category (ToC only)
+   - Present: "Project context: X facts, Y relevant [category] entries"
+
+5. **Read Task Registry**
    - `docs/tasks/registry.json` - Task/epic status and dependencies
    - Identify tasks with status `in_progress` or `continuation`
 
-5. **Present Combined Context**
+6. **Present Combined Context**
 
 ```markdown
 ## Session Resume
@@ -141,7 +163,7 @@ git status --short
 - **Next steps:** [list]
 ```
 
-6. **Confirm and Continue**
+7. **Confirm and Continue**
    - Ask: "Continue from here?"
    - If yes, load context and proceed with incomplete tasks
 
@@ -220,11 +242,25 @@ Resume a specific task.
    - Files to modify
    - Acceptance criteria
 
-5. **Acquire Lock**
+5. **Load Relevant Project Memory**
+   - Determine task type from:
+     - Task title keywords ("fix", "add", "refactor", "implement")
+     - Task description content
+   - Load memories per strategy above
+   - Include in task context presentation:
+
+```markdown
+### Project Memory
+**Loaded:** 3 key facts, 2 relevant bugs
+- [BUG-012] Auth Token Race Condition
+- [BUG-015] Connection Pool Exhaustion
+```
+
+6. **Acquire Lock**
    - Set task status to `in_progress`
    - Record session ID and timestamp in lock
 
-6. **Present Task Context**
+7. **Present Task Context**
 
 ```markdown
 ## Resuming Task T002: [Task Name]
