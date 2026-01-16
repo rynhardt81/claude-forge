@@ -45,6 +45,17 @@ This directory contains template files that are copied and customized when deplo
 | `feature-spec.md` | Feature specification template | Used inline |
 | `feature-breakdown-report.md` | Feature breakdown summary | `docs/feature-breakdown.md` |
 
+### Project Memory Templates
+
+| Template | Purpose | Deployed To |
+|----------|---------|-------------|
+| `project-memory/bugs.md` | Bug pattern memory template | `docs/project-memory/bugs.md` |
+| `project-memory/decisions.md` | Technical decision memory template | `docs/project-memory/decisions.md` |
+| `project-memory/key-facts.md` | Key facts memory template | `docs/project-memory/key-facts.md` |
+| `project-memory/patterns.md` | Code pattern memory template | `docs/project-memory/patterns.md` |
+
+The project memory templates provide structured formats for capturing institutional knowledge that persists across sessions. See [reference/16-project-memory.md](../reference/16-project-memory.md) for full documentation.
+
 ### Review Templates
 
 | Template | Purpose | Deployed To |

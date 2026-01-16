@@ -92,6 +92,7 @@ backup_if_exists() {
 # Confirm
 echo -e "${CYAN}This will install the Project Memory feature:${NC}"
 echo "  - docs/project-memory/ with template files"
+echo "  - .claude/templates/project-memory/ (for resets)"
 echo "  - /remember skill for adding memories"
 echo "  - Updated /fix-bug with memory phases"
 echo "  - Updated /reflect with memory loading"
@@ -137,11 +138,34 @@ if [ "$copy_templates" = true ]; then
         cp "$FRAMEWORK_DIR/templates/project-memory/decisions.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
         cp "$FRAMEWORK_DIR/templates/project-memory/key-facts.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
         cp "$FRAMEWORK_DIR/templates/project-memory/patterns.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
-        echo -e "${GREEN}✓${NC} Copied template files"
+        echo -e "${GREEN}✓${NC} Copied template files to docs/project-memory/"
         changes_made=1
     else
         echo -e "${RED}✗${NC} Templates not found in framework"
     fi
+fi
+
+# Step 1b: Copy templates to .claude/templates/project-memory/ (for resets)
+echo ""
+echo -e "${BLUE}Step 1b: Installing templates to .claude/templates/...${NC}"
+
+templates_dest="$PROJECT_DIR/.claude/templates/project-memory"
+if [ -d "$FRAMEWORK_DIR/templates/project-memory" ]; then
+    if [ -d "$templates_dest" ]; then
+        if backup_if_exists "$templates_dest"; then
+            echo -e "${GREEN}✓${NC} Backed up existing templates"
+            ((backups_created++))
+        fi
+    fi
+    mkdir -p "$templates_dest"
+    cp "$FRAMEWORK_DIR/templates/project-memory/bugs.md" "$templates_dest/" 2>/dev/null || true
+    cp "$FRAMEWORK_DIR/templates/project-memory/decisions.md" "$templates_dest/" 2>/dev/null || true
+    cp "$FRAMEWORK_DIR/templates/project-memory/key-facts.md" "$templates_dest/" 2>/dev/null || true
+    cp "$FRAMEWORK_DIR/templates/project-memory/patterns.md" "$templates_dest/" 2>/dev/null || true
+    echo -e "${GREEN}✓${NC} Installed templates to .claude/templates/project-memory/"
+    changes_made=1
+else
+    echo -e "${YELLOW}⚠${NC} Templates not found in framework"
 fi
 
 # Step 2: Copy /remember skill

@@ -130,6 +130,7 @@ Write-Host ""
 # Confirm
 Write-Info "This will install the Project Memory feature:"
 Write-Host "  - docs/project-memory/ with template files"
+Write-Host "  - .claude/templates/project-memory/ (for resets)"
 Write-Host "  - /remember skill for adding memories"
 Write-Host "  - Updated /fix-bug with memory phases"
 Write-Host "  - Updated /reflect with memory loading"
@@ -185,12 +186,42 @@ if ($copyTemplates) {
                 Copy-Item -Path $sourcePath -Destination $destPath -Force
             }
         }
-        Write-Success "Copied template files"
+        Write-Success "Copied template files to docs/project-memory/"
         $changesMade++
     }
     else {
         Write-Error "Templates not found in framework"
     }
+}
+
+# Step 1b: Copy templates to .claude/templates/project-memory/ (for resets)
+Write-Host ""
+Write-Step "Step 1b: Installing templates to .claude/templates/..."
+
+$TemplatesSrc = Join-Path $FrameworkDir "templates\project-memory"
+$TemplatesDest = Join-Path $ProjectPath ".claude\templates\project-memory"
+
+if (Test-Path $TemplatesSrc -PathType Container) {
+    if (Test-Path $TemplatesDest -PathType Container) {
+        if (Backup-IfExists -SourcePath $TemplatesDest -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+            Write-Success "Backed up existing templates"
+            $backupsCreated++
+        }
+    }
+    New-Item -Path $TemplatesDest -ItemType Directory -Force | Out-Null
+    $templateFiles = @("bugs.md", "decisions.md", "key-facts.md", "patterns.md")
+    foreach ($file in $templateFiles) {
+        $sourcePath = Join-Path $TemplatesSrc $file
+        $destPath = Join-Path $TemplatesDest $file
+        if (Test-Path $sourcePath) {
+            Copy-Item -Path $sourcePath -Destination $destPath -Force
+        }
+    }
+    Write-Success "Installed templates to .claude/templates/project-memory/"
+    $changesMade++
+}
+else {
+    Write-Warning "Templates not found in framework"
 }
 
 # Step 2: Copy /remember skill

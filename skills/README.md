@@ -17,6 +17,7 @@ Skills are reusable workflows that automate common development tasks. Each skill
 | [create-pr](#create-pr) | `/create-pr` | Pull request creation with smart defaults |
 | [release](#release) | `/release` | Version releases with changelog |
 | [implement-features](#implement-features) | `/implement-features` | Autonomous feature implementation |
+| [remember](#remember) | `/remember` | Project memory management |
 | [pdf](#pdf) | `/pdf` | PDF processing and manipulation |
 
 ---
@@ -470,6 +471,52 @@ When `--parallel` is enabled, features can be implemented in parallel:
 - MCP servers configured
 - Testing infrastructure in place
 - Dispatch config at `.claude/memories/.dispatch-config.json` (for parallel mode)
+
+---
+
+### remember
+
+**Purpose:** Project memory management for capturing institutional knowledge that persists across sessions.
+
+**Invocation:**
+```
+/remember bug "Bug title"              # Record a bug pattern
+/remember decision "Decision title"    # Record a technical decision
+/remember fact "label: value"          # Record a key fact
+/remember pattern "Pattern title"      # Record a code pattern
+/remember search "query"               # Search memories
+/remember list                         # List recent memories
+/remember list bugs                    # List bugs category
+```
+
+**Categories:**
+| Category | File | Use Case |
+|----------|------|----------|
+| `bug` | `docs/project-memory/bugs.md` | Bug patterns, root causes, solutions |
+| `decision` | `docs/project-memory/decisions.md` | Technical decisions with rationale |
+| `fact` | `docs/project-memory/key-facts.md` | Key facts about the project |
+| `pattern` | `docs/project-memory/patterns.md` | Reusable code patterns |
+
+**Workflow:**
+1. **Extraction** - AI extracts structured data from description
+2. **Categorization** - Routes to appropriate memory file
+3. **ToC Update** - Updates table of contents for quick scanning
+4. **Archive** - SQLite FTS5 for full-text search
+
+**Integration:**
+- `/fix-bug` loads relevant bug memories before diagnosis (Phase 0)
+- `/fix-bug` offers to save new bug patterns after fixes (Phase 4.5, 5.5)
+- `/reflect resume` loads relevant memories based on task context
+
+**When to Use:**
+- After fixing a bug with interesting root cause
+- After making a technical decision
+- When discovering important project facts
+- When creating reusable code patterns
+
+**Prerequisites:**
+- Project initialized with Claude Forge v1.6.0+
+- `docs/project-memory/` directory exists
 
 ---
 

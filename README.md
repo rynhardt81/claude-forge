@@ -27,11 +27,13 @@ A comprehensive framework for AI-assisted software development with Claude Code.
   - [Project Commands](#project-commands)
   - [Reflect Commands](#reflect-commands)
   - [Dispatch Commands](#dispatch-commands)
+  - [Project Memory Commands](#project-memory-commands)
   - [PDF Commands](#pdf-commands)
 - [Intelligent Dispatch](#intelligent-dispatch)
   - [Sub-Agent Dispatch](#sub-agent-dispatch)
   - [Intent Detection](#intent-detection)
   - [Configuration](#dispatch-configuration)
+- [Project Memory](#project-memory)
 - [Setup Guide](#setup-guide)
 - [Directory Structure](#directory-structure)
 - [Framework Components](#framework-components)
@@ -54,6 +56,7 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 - **Autonomous Development** - Full project implementation from idea to code
 - **Intelligent Dispatch** - Automatic sub-agent parallelization and intent detection
 - **Token Optimization** - On-demand loading of tools and references to preserve context
+- **Project Memory** - Persistent institutional knowledge (bugs, decisions, patterns, facts)
 
 ---
 
@@ -350,6 +353,18 @@ Tasks are locked when an agent starts work:
 | `/reflect intent on` | Enable intent detection |
 | `/reflect intent off` | Disable intent detection |
 
+### Project Memory Commands
+
+| Command | Description |
+|---------|-------------|
+| `/remember bug "title"` | Record a bug pattern with root cause |
+| `/remember decision "title"` | Record a technical decision |
+| `/remember fact "label: value"` | Record a key fact |
+| `/remember pattern "title"` | Record a code pattern |
+| `/remember search "query"` | Search memories (FTS5) |
+| `/remember list` | List recent memories |
+| `/remember list <category>` | List specific category |
+
 ### PDF Commands
 
 | Command | Description |
@@ -426,6 +441,66 @@ Location: `.claude/memories/.dispatch-config.json`
 | `aggressive` | Large projects | automatic mode, 5 agents, 0.6 threshold |
 
 Apply with: `/reflect config --preset balanced`
+
+---
+
+## Project Memory
+
+The **Project Memory** system captures institutional knowledge that persists across sessions, preventing "AI project amnesia" where valuable context is lost between conversations.
+
+### Memory Categories
+
+| Category | File | Purpose |
+|----------|------|---------|
+| **Bugs** | `docs/project-memory/bugs.md` | Bug patterns, root causes, and solutions |
+| **Decisions** | `docs/project-memory/decisions.md` | Technical decisions with rationale |
+| **Key Facts** | `docs/project-memory/key-facts.md` | Important project facts |
+| **Patterns** | `docs/project-memory/patterns.md` | Reusable code patterns |
+
+### How It Works
+
+1. **Recording Memories** - Use `/remember <category> "description"` to capture knowledge
+2. **ToC-Based Loading** - Each file has a table of contents for token-efficient scanning
+3. **Smart Loading** - `/reflect resume` loads relevant memories based on task context
+4. **Bug Integration** - `/fix-bug` automatically checks bugs.md before diagnosis
+5. **Full-Text Search** - SQLite FTS5 archive enables searching across all memories
+
+### Usage Examples
+
+```bash
+# After fixing a tricky bug
+/remember bug "Async test failures were caused by missing await on database cleanup"
+
+# After a technical decision
+/remember decision "Chose Postgres over SQLite for production due to concurrent writes"
+
+# Recording key facts
+/remember fact "max_connections: 100 (load balanced across 3 DB replicas)"
+
+# Recording patterns
+/remember pattern "Use the retry decorator for all external API calls"
+
+# Searching memories
+/remember search "database connection"
+```
+
+### Adding to Existing Projects
+
+For projects that already have Claude Forge installed:
+
+```bash
+# macOS/Linux
+./scripts/add-project-memory.sh
+
+# Windows PowerShell
+.\scripts\add-project-memory.ps1
+```
+
+These scripts:
+- Create `docs/project-memory/` with template files
+- Install the `/remember` skill
+- Update `/fix-bug` and `/reflect` with memory integration
+- Create timestamped backups before overwriting existing files
 
 ---
 
@@ -581,6 +656,11 @@ done
 │   │   ├── PHASES.md            # Phase instructions
 │   │   ├── MERGE-RULES.md       # Content migration rules
 │   │   └── CHECKPOINTS.md       # User confirmation points
+│   ├── remember/                # Project memory management
+│   │   ├── SKILL.md             # Memory recording workflow
+│   │   ├── CATEGORIES.md        # Category definitions
+│   │   ├── ARCHIVE.md           # SQLite archive instructions
+│   │   └── EXTRACTION.md        # Content extraction rules
 │   ├── implement-features/      # Autonomous implementation
 │   ├── pdf/                     # PDF processing
 │   └── ...
@@ -604,6 +684,11 @@ done
 │   ├── config.json              # Config template
 │   ├── adr-template.md          # Architecture Decision
 │   ├── session.md               # Session file template
+│   ├── project-memory/          # Project memory templates
+│   │   ├── bugs.md              # Bug pattern template
+│   │   ├── decisions.md         # Decision record template
+│   │   ├── key-facts.md         # Key facts template
+│   │   └── patterns.md          # Code pattern template
 │   └── ...
 │
 ├── reference/                   # Architecture doc templates
@@ -638,6 +723,11 @@ docs/                            # Project documentation (created by /new-projec
 ├── tasks/
 │   ├── registry.json            # Master task/epic registry
 │   └── config.json              # Project configuration
+├── project-memory/              # Institutional knowledge (created by /new-project or add-project-memory script)
+│   ├── bugs.md                  # Bug patterns and solutions
+│   ├── decisions.md             # Technical decisions with rationale
+│   ├── key-facts.md             # Important project facts
+│   └── patterns.md              # Reusable code patterns
 └── epics/
     ├── E01-epic-name/
     │   ├── E01-epic-name.md     # Epic file
@@ -661,6 +751,7 @@ docs/                            # Project documentation (created by /new-projec
 | New Project | `/new-project` | Initialize project |
 | Migrate | `/migrate` | Migrate existing project to Claude Forge |
 | Implement | `/implement-features` | Autonomous feature loop |
+| Remember | `/remember` | Project memory management |
 | PDF | `/pdf <command>` | PDF processing tasks |
 
 ### Agents
@@ -826,10 +917,21 @@ ls docs/tasks/registry.json
 
 ## Version
 
-**Framework Version:** 1.5.0
-**Last Updated:** 2026-01-15
+**Framework Version:** 1.6.0
+**Last Updated:** 2026-01-16
 
 ### Changelog
+
+**v1.6.0** (2026-01-16)
+- Added Project Memory system for persistent institutional knowledge
+- Added `/remember` skill with categories: bugs, decisions, patterns, key-facts
+- Added ToC-based loading for token-efficient memory access
+- Added SQLite FTS5 archive for full-text memory search
+- Updated `/fix-bug` with memory phases (0, 4.5, 5.5)
+- Updated `/reflect resume` with smart memory loading
+- Updated migration scripts to initialize project memory
+- Added `add-project-memory.sh` and `add-project-memory.ps1` for existing installations
+- Added `templates/project-memory/` with category templates
 
 **v1.5.0** (2026-01-15)
 - Added hook enforcement system for mandatory gates (not advisory)
