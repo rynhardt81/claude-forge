@@ -1,5 +1,29 @@
 # Phase Execution Details
 
+## Phase 0: Memory Check (All Severities)
+
+**Goal:** Check project memory for similar past bugs before investigating.
+
+**Actions:**
+
+1. Check if `docs/project-memory/bugs.md` exists
+2. If exists, read ToC section only
+3. Extract keywords from current bug description
+4. Match against ToC entries (title + tags)
+5. If matches found:
+   - Load matching entry content
+   - Present: "Found similar past bugs that might help:"
+   - Show each match: `BUG-XXX: Title - brief solution`
+6. Ask: "Any of these relevant? [Enter ID to load full entry, or 'n' to proceed]"
+7. If user selects an ID, load and display full entry
+8. Proceed to Phase 1
+
+**Token budget:** ~500 tokens max for memory check.
+
+**Skip if:** `docs/project-memory/bugs.md` doesn't exist.
+
+---
+
 ## Critical Bugs: Fast Triage
 
 ### Phase 1: Understand
@@ -60,6 +84,25 @@
 **Update debug doc:** Check off verification items, set Status to Resolved
 
 **Checkpoint:** "All checks pass. Ready to commit?"
+
+---
+
+### Phase 4.5: Memory Capture (Optional)
+
+**Goal:** Capture bug pattern for future reference.
+
+**Actions:**
+
+1. Ask: "This bug might help future debugging. Save the pattern?"
+2. If yes:
+   - Pre-fill description from debug doc
+   - Invoke: `/remember bug "<title from debug doc>"`
+   - Complete the prompted details
+3. Proceed to commit
+
+**Skip if:**
+- Bug was trivial (obvious typo, etc.)
+- Similar pattern already exists in bugs.md
 
 ---
 
@@ -137,6 +180,25 @@
 **Invoke:** `Skill tool → superpowers:verification-before-completion`
 
 Same as Critical Phase 4.
+
+---
+
+### Phase 5.5: Memory Capture (Optional)
+
+**Goal:** Capture bug pattern for future reference.
+
+**Actions:**
+
+1. Ask: "This bug might help future debugging. Save the pattern?"
+2. If yes:
+   - Pre-fill description from debug doc
+   - Invoke: `/remember bug "<title from debug doc>"`
+   - Complete the prompted details
+3. Proceed to commit
+
+**Skip if:**
+- Bug was trivial (obvious typo, etc.)
+- Similar pattern already exists in bugs.md
 
 ---
 

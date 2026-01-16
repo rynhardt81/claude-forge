@@ -29,11 +29,13 @@ Examples:
 
 Run phases based on severity. See [PHASES.md](PHASES.md).
 
+**All severities start with Phase 0: Memory Check**
+
 | Severity | Phases |
 |----------|--------|
-| Critical | Understand → Locate → Fix → Verify |
-| Normal | Reproduce → Hypothesize → Test → Fix → Verify |
-| Minor | Reproduce → Fix → Verify |
+| Critical | Memory Check → Understand → Locate → Fix → Verify → Memory Capture |
+| Normal | Memory Check → Reproduce → Hypothesize → Test → Fix → Verify → Memory Capture |
+| Minor | Memory Check → Reproduce → Fix → Verify |
 
 ## Step 3: Context Tracking
 
