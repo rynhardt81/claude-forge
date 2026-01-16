@@ -324,7 +324,31 @@ New-Item -Path (Join-Path $SessionsCompleted ".gitkeep") -ItemType File -Force |
 
 Write-Success "Session directories created"
 
-# Step 4: Summary
+# Step 4: Initialize project memory
+Write-Host ""
+Write-Step "Step 4: Initializing project memory..."
+
+$ProjectMemoryDir = Join-Path $ProjectPath "docs\project-memory"
+New-Item -Path $ProjectMemoryDir -ItemType Directory -Force | Out-Null
+
+# Copy templates if they exist
+$TemplatesDir = Join-Path $FrameworkDir "templates\project-memory"
+if (Test-Path $TemplatesDir -PathType Container) {
+    $templateFiles = @("bugs.md", "decisions.md", "key-facts.md", "patterns.md")
+    foreach ($file in $templateFiles) {
+        $sourcePath = Join-Path $TemplatesDir $file
+        $destPath = Join-Path $ProjectMemoryDir $file
+        if (Test-Path $sourcePath) {
+            Copy-Item -Path $sourcePath -Destination $destPath -Force
+        }
+    }
+    Write-Success "Project memory initialized at: $ProjectMemoryDir"
+}
+else {
+    Write-Warning "Templates not found, created empty directory"
+}
+
+# Summary
 Write-Host ""
 Write-Info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 Write-ColorOutput "Migration Setup Complete!" -Color Green

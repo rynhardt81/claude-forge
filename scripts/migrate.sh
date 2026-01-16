@@ -229,7 +229,24 @@ touch "$PROJECT_DIR/.claude/memories/sessions/completed/.gitkeep"
 
 echo -e "${GREEN}✓${NC} Session directories created"
 
-# Step 4: Summary
+# Step 4: Initialize project memory
+echo ""
+echo -e "${BLUE}Step 4: Initializing project memory...${NC}"
+
+mkdir -p "$PROJECT_DIR/docs/project-memory"
+
+# Copy templates if they exist
+if [ -d "$FRAMEWORK_DIR/templates/project-memory" ]; then
+    cp "$FRAMEWORK_DIR/templates/project-memory/bugs.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
+    cp "$FRAMEWORK_DIR/templates/project-memory/decisions.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
+    cp "$FRAMEWORK_DIR/templates/project-memory/key-facts.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
+    cp "$FRAMEWORK_DIR/templates/project-memory/patterns.md" "$PROJECT_DIR/docs/project-memory/" 2>/dev/null || true
+    echo -e "${GREEN}✓${NC} Project memory initialized at: $PROJECT_DIR/docs/project-memory/"
+else
+    echo -e "${YELLOW}⚠${NC} Templates not found, created empty directory"
+fi
+
+# Summary
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}Migration Setup Complete!${NC}"
