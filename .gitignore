@@ -12,6 +12,7 @@ memories/.reflect-config.json
 memories/.dispatch-config.json
 
 # Project docs directory (created per-project, not part of framework)
+# Comment out if you want to keep the project docs in your projects
 docs/
 
 # OS files
