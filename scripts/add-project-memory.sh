@@ -24,6 +24,9 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRAMEWORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# Backup timestamp
+BACKUP_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
 echo -e "${CYAN}"
 echo "╔═══════════════════════════════════════════════════════════════╗"
 echo "║           Add Project Memory Feature                           ║"
@@ -70,6 +73,22 @@ fi
 echo -e "${GREEN}✓${NC} Claude Forge installation found"
 echo ""
 
+# Backup function
+backup_if_exists() {
+    local src="$1"
+    local backup_dir="$PROJECT_DIR/.claude/backups/$BACKUP_TIMESTAMP"
+
+    if [ -e "$src" ]; then
+        mkdir -p "$backup_dir"
+        local relative_path="${src#$PROJECT_DIR/}"
+        local backup_path="$backup_dir/$relative_path"
+        mkdir -p "$(dirname "$backup_path")"
+        cp -r "$src" "$backup_path"
+        return 0  # backup was created
+    fi
+    return 1  # nothing to backup
+}
+
 # Confirm
 echo -e "${CYAN}This will install the Project Memory feature:${NC}"
 echo "  - docs/project-memory/ with template files"
@@ -77,6 +96,8 @@ echo "  - /remember skill for adding memories"
 echo "  - Updated /fix-bug with memory phases"
 echo "  - Updated /reflect with memory loading"
 echo "  - Reference documentation"
+echo ""
+echo -e "${YELLOW}Existing files will be backed up to .claude/backups/${NC}"
 echo ""
 read -r -p "Proceed? [Y/n] " response
 if [[ "$response" =~ ^[Nn]$ ]]; then
@@ -86,6 +107,7 @@ fi
 
 echo ""
 changes_made=0
+backups_created=0
 
 # Step 1: Create docs/project-memory/ structure
 echo -e "${BLUE}Step 1: Creating project memory structure...${NC}"
@@ -95,6 +117,10 @@ if [ -d "$PROJECT_DIR/docs/project-memory" ]; then
     echo -e "${YELLOW}⚠${NC} docs/project-memory/ already exists"
     read -r -p "   Overwrite template files? [y/N] " overwrite
     if [[ "$overwrite" =~ ^[Yy]$ ]]; then
+        if backup_if_exists "$PROJECT_DIR/docs/project-memory"; then
+            echo -e "${GREEN}✓${NC} Backed up existing project-memory/"
+            ((backups_created++))
+        fi
         copy_templates=true
     else
         echo -e "${GREEN}✓${NC} Keeping existing project memory files"
@@ -124,7 +150,10 @@ echo -e "${BLUE}Step 2: Installing /remember skill...${NC}"
 
 if [ -d "$FRAMEWORK_DIR/skills/remember" ]; then
     if [ -d "$PROJECT_DIR/.claude/skills/remember" ]; then
-        echo -e "${YELLOW}⚠${NC} /remember skill already exists, updating..."
+        if backup_if_exists "$PROJECT_DIR/.claude/skills/remember"; then
+            echo -e "${GREEN}✓${NC} Backed up existing /remember skill"
+            ((backups_created++))
+        fi
     fi
     mkdir -p "$PROJECT_DIR/.claude/skills/remember"
     cp -r "$FRAMEWORK_DIR/skills/remember/"* "$PROJECT_DIR/.claude/skills/remember/"
@@ -139,6 +168,10 @@ echo ""
 echo -e "${BLUE}Step 3: Installing reference documentation...${NC}"
 
 if [ -f "$FRAMEWORK_DIR/reference/16-project-memory.md" ]; then
+    if backup_if_exists "$PROJECT_DIR/.claude/reference/16-project-memory.md"; then
+        echo -e "${GREEN}✓${NC} Backed up existing reference doc"
+        ((backups_created++))
+    fi
     mkdir -p "$PROJECT_DIR/.claude/reference"
     cp "$FRAMEWORK_DIR/reference/16-project-memory.md" "$PROJECT_DIR/.claude/reference/"
     echo -e "${GREEN}✓${NC} Installed reference/16-project-memory.md"
@@ -152,6 +185,12 @@ echo ""
 echo -e "${BLUE}Step 4: Updating /fix-bug skill...${NC}"
 
 if [ -d "$FRAMEWORK_DIR/skills/fix-bug" ]; then
+    if [ -d "$PROJECT_DIR/.claude/skills/fix-bug" ]; then
+        if backup_if_exists "$PROJECT_DIR/.claude/skills/fix-bug"; then
+            echo -e "${GREEN}✓${NC} Backed up existing /fix-bug skill"
+            ((backups_created++))
+        fi
+    fi
     mkdir -p "$PROJECT_DIR/.claude/skills/fix-bug"
     cp -r "$FRAMEWORK_DIR/skills/fix-bug/"* "$PROJECT_DIR/.claude/skills/fix-bug/"
     echo -e "${GREEN}✓${NC} Updated /fix-bug skill with memory phases"
@@ -163,6 +202,12 @@ echo ""
 echo -e "${BLUE}Step 5: Updating /reflect skill...${NC}"
 
 if [ -d "$FRAMEWORK_DIR/skills/reflect" ]; then
+    if [ -d "$PROJECT_DIR/.claude/skills/reflect" ]; then
+        if backup_if_exists "$PROJECT_DIR/.claude/skills/reflect"; then
+            echo -e "${GREEN}✓${NC} Backed up existing /reflect skill"
+            ((backups_created++))
+        fi
+    fi
     mkdir -p "$PROJECT_DIR/.claude/skills/reflect"
     cp -r "$FRAMEWORK_DIR/skills/reflect/"* "$PROJECT_DIR/.claude/skills/reflect/"
     echo -e "${GREEN}✓${NC} Updated /reflect skill with memory loading"
@@ -177,6 +222,11 @@ agents_updated=0
 for agent in architect dev tea; do
     if [ -f "$FRAMEWORK_DIR/.claude/agents/$agent.mdc" ]; then
         if [ -d "$PROJECT_DIR/.claude/agents" ]; then
+            if [ -f "$PROJECT_DIR/.claude/agents/$agent.mdc" ]; then
+                if backup_if_exists "$PROJECT_DIR/.claude/agents/$agent.mdc"; then
+                    ((backups_created++))
+                fi
+            fi
             cp "$FRAMEWORK_DIR/.claude/agents/$agent.mdc" "$PROJECT_DIR/.claude/agents/"
             ((agents_updated++))
         fi
@@ -185,6 +235,9 @@ done
 
 if [ $agents_updated -gt 0 ]; then
     echo -e "${GREEN}✓${NC} Updated $agents_updated agent definition(s)"
+    if [ $backups_created -gt 0 ]; then
+        echo -e "${GREEN}✓${NC} Backed up existing agents"
+    fi
     changes_made=1
 else
     echo -e "${YELLOW}⚠${NC} No agents to update (agents directory not found)"
@@ -212,6 +265,14 @@ if [ $changes_made -gt 0 ]; then
     echo -e "${GREEN}Project Memory feature installed successfully!${NC}"
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
+
+    if [ $backups_created -gt 0 ]; then
+        echo -e "${CYAN}Backups:${NC}"
+        echo "  Location: .claude/backups/$BACKUP_TIMESTAMP/"
+        echo "  Files backed up: $backups_created"
+        echo ""
+    fi
+
     echo -e "${CYAN}Usage:${NC}"
     echo "  /remember bug \"Bug title\"      - Record a bug pattern"
     echo "  /remember decision \"Title\"     - Record a technical decision"

@@ -6,6 +6,7 @@
 .DESCRIPTION
     This script adds the project memory feature (bugs, decisions, patterns, key-facts)
     to a project that already has Claude Forge installed.
+    Existing files are backed up before being overwritten.
 
 .PARAMETER ProjectPath
     Optional. The path to the project you want to add the feature to.
@@ -32,6 +33,9 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $FrameworkDir = Split-Path -Parent $ScriptDir
 
+# Backup timestamp
+$BackupTimestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+
 # Colors
 function Write-ColorOutput {
     param(
@@ -49,6 +53,30 @@ function Write-Warning { param([string]$Message) Write-ColorOutput "⚠ $Message
 function Write-Error { param([string]$Message) Write-ColorOutput "✗ $Message" -Color Red }
 function Write-Info { param([string]$Message) Write-ColorOutput $Message -Color Cyan }
 function Write-Step { param([string]$Message) Write-ColorOutput $Message -Color Blue }
+
+# Backup function
+function Backup-IfExists {
+    param(
+        [string]$SourcePath,
+        [string]$ProjectDir,
+        [string]$Timestamp
+    )
+
+    if (Test-Path $SourcePath) {
+        $backupDir = Join-Path $ProjectDir ".claude\backups\$Timestamp"
+        $relativePath = $SourcePath.Replace($ProjectDir, "").TrimStart("\", "/")
+        $backupPath = Join-Path $backupDir $relativePath
+
+        $backupParent = Split-Path -Parent $backupPath
+        if (-not (Test-Path $backupParent)) {
+            New-Item -Path $backupParent -ItemType Directory -Force | Out-Null
+        }
+
+        Copy-Item -Path $SourcePath -Destination $backupPath -Recurse -Force
+        return $true
+    }
+    return $false
+}
 
 # Header
 Write-Host ""
@@ -107,6 +135,8 @@ Write-Host "  - Updated /fix-bug with memory phases"
 Write-Host "  - Updated /reflect with memory loading"
 Write-Host "  - Reference documentation"
 Write-Host ""
+Write-Warning "Existing files will be backed up to .claude/backups/"
+Write-Host ""
 
 $response = Read-Host "Proceed? [Y/n]"
 if ($response -match "^[Nn]$") {
@@ -116,6 +146,7 @@ if ($response -match "^[Nn]$") {
 
 Write-Host ""
 $changesMade = 0
+$backupsCreated = 0
 
 # Step 1: Create docs/project-memory/ structure
 Write-Step "Step 1: Creating project memory structure..."
@@ -127,6 +158,10 @@ if (Test-Path $ProjectMemoryDir -PathType Container) {
     Write-Warning "docs/project-memory/ already exists"
     $overwrite = Read-Host "   Overwrite template files? [y/N]"
     if ($overwrite -match "^[Yy]$") {
+        if (Backup-IfExists -SourcePath $ProjectMemoryDir -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+            Write-Success "Backed up existing project-memory/"
+            $backupsCreated++
+        }
         $copyTemplates = $true
     }
     else {
@@ -167,7 +202,10 @@ $RememberSkillDest = Join-Path $ProjectPath ".claude\skills\remember"
 
 if (Test-Path $RememberSkillSrc -PathType Container) {
     if (Test-Path $RememberSkillDest -PathType Container) {
-        Write-Warning "/remember skill already exists, updating..."
+        if (Backup-IfExists -SourcePath $RememberSkillDest -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+            Write-Success "Backed up existing /remember skill"
+            $backupsCreated++
+        }
     }
     New-Item -Path $RememberSkillDest -ItemType Directory -Force | Out-Null
     Copy-Item -Path "$RememberSkillSrc\*" -Destination $RememberSkillDest -Recurse -Force
@@ -184,8 +222,13 @@ Write-Step "Step 3: Installing reference documentation..."
 
 $RefDocSrc = Join-Path $FrameworkDir "reference\16-project-memory.md"
 $RefDocDest = Join-Path $ProjectPath ".claude\reference"
+$RefDocDestFile = Join-Path $RefDocDest "16-project-memory.md"
 
 if (Test-Path $RefDocSrc) {
+    if (Backup-IfExists -SourcePath $RefDocDestFile -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+        Write-Success "Backed up existing reference doc"
+        $backupsCreated++
+    }
     New-Item -Path $RefDocDest -ItemType Directory -Force | Out-Null
     Copy-Item -Path $RefDocSrc -Destination $RefDocDest -Force
     Write-Success "Installed reference/16-project-memory.md"
@@ -203,6 +246,12 @@ $FixBugSrc = Join-Path $FrameworkDir "skills\fix-bug"
 $FixBugDest = Join-Path $ProjectPath ".claude\skills\fix-bug"
 
 if (Test-Path $FixBugSrc -PathType Container) {
+    if (Test-Path $FixBugDest -PathType Container) {
+        if (Backup-IfExists -SourcePath $FixBugDest -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+            Write-Success "Backed up existing /fix-bug skill"
+            $backupsCreated++
+        }
+    }
     New-Item -Path $FixBugDest -ItemType Directory -Force | Out-Null
     Copy-Item -Path "$FixBugSrc\*" -Destination $FixBugDest -Recurse -Force
     Write-Success "Updated /fix-bug skill with memory phases"
@@ -217,6 +266,12 @@ $ReflectSrc = Join-Path $FrameworkDir "skills\reflect"
 $ReflectDest = Join-Path $ProjectPath ".claude\skills\reflect"
 
 if (Test-Path $ReflectSrc -PathType Container) {
+    if (Test-Path $ReflectDest -PathType Container) {
+        if (Backup-IfExists -SourcePath $ReflectDest -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+            Write-Success "Backed up existing /reflect skill"
+            $backupsCreated++
+        }
+    }
     New-Item -Path $ReflectDest -ItemType Directory -Force | Out-Null
     Copy-Item -Path "$ReflectSrc\*" -Destination $ReflectDest -Recurse -Force
     Write-Success "Updated /reflect skill with memory loading"
@@ -232,7 +287,14 @@ $AgentsDest = Join-Path $ProjectPath ".claude\agents"
 
 foreach ($agent in @("architect", "dev", "tea")) {
     $agentSrc = Join-Path $FrameworkDir ".claude\agents\$agent.mdc"
+    $agentDestFile = Join-Path $AgentsDest "$agent.mdc"
+
     if ((Test-Path $agentSrc) -and (Test-Path $AgentsDest -PathType Container)) {
+        if (Test-Path $agentDestFile) {
+            if (Backup-IfExists -SourcePath $agentDestFile -ProjectDir $ProjectPath -Timestamp $BackupTimestamp) {
+                $backupsCreated++
+            }
+        }
         Copy-Item -Path $agentSrc -Destination $AgentsDest -Force
         $agentsUpdated++
     }
@@ -271,6 +333,14 @@ if ($changesMade -gt 0) {
     Write-ColorOutput "Project Memory feature installed successfully!" -Color Green
     Write-Info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     Write-Host ""
+
+    if ($backupsCreated -gt 0) {
+        Write-Info "Backups:"
+        Write-Host "  Location: .claude/backups/$BackupTimestamp/"
+        Write-Host "  Files backed up: $backupsCreated"
+        Write-Host ""
+    }
+
     Write-Info "Usage:"
     Write-Host '  /remember bug "Bug title"      - Record a bug pattern'
     Write-Host '  /remember decision "Title"     - Record a technical decision'
