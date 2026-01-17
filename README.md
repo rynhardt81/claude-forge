@@ -769,11 +769,21 @@ done
 .claude/
 ├── CLAUDE.md                    # Project instructions
 │
-├── scripts/                     # Setup & migration scripts
-│   ├── migrate.sh               # Unix/Mac migration script
-│   └── migrate.ps1              # Windows PowerShell migration script
+├── scripts/                     # Setup, migration & helper scripts
+│   ├── install/                 # Installation scripts
+│   │   ├── migrate.sh           # Unix/Mac migration script
+│   │   ├── migrate.ps1          # Windows PowerShell migration script
+│   │   └── add-project-memory.* # Add Project Memory feature
+│   └── helpers/                 # Runtime helper scripts (Python)
+│       ├── detect_agent.py      # Detect agent from task content
+│       ├── prepare_task_prompt.py # Generate Task tool prompts
+│       └── dispatch_analysis.py # Analyze parallelizable work
 │
 ├── agents/                      # Full agent personas (15 agents)
+│   ├── summaries/               # Lean agent summaries (~100 tokens each)
+│   │   ├── developer.md         # For quick context loading
+│   │   ├── security-boss.md
+│   │   └── ...
 │   ├── security-boss.md         # Security, auth, payments
 │   ├── architect.md             # System design, ADRs
 │   ├── project-manager.md       # PRDs, scope management
@@ -1065,10 +1075,21 @@ ls docs/tasks/registry.json
 
 ## Version
 
-**Framework Version:** 1.6.0
-**Last Updated:** 2026-01-16
+**Framework Version:** 1.7.0
+**Last Updated:** 2026-01-17
 
 ### Changelog
+
+**v1.7.0** (2026-01-17)
+- Added agent summaries (`agents/summaries/`) for lean context loading (~100 tokens each)
+- Added automatic agent detection in `/reflect resume` based on task keywords
+- Added Python helper scripts (`scripts/helpers/`) for token-efficient operations:
+  - `detect_agent.py` - Detect agent from task content
+  - `prepare_task_prompt.py` - Generate complete Task tool prompts
+  - `dispatch_analysis.py` - Analyze parallelizable work
+- Added task delegation templates (`reference/16-task-delegation-templates.md`)
+- Reorganized scripts into `install/` and `helpers/` subdirectories
+- Updated `/reflect resume` skill with agent detection and summary loading step
 
 **v1.6.0** (2026-01-16)
 - Added Project Memory system for persistent institutional knowledge

@@ -1,23 +1,41 @@
 # Claude Forge Scripts
 
-This directory contains shell scripts for setting up and managing Claude Forge installations.
+This directory contains scripts for setup, management, and runtime helpers.
 
-## Available Scripts
+## Directory Structure
+
+```
+scripts/
+├── install/          # Installation and migration scripts
+│   ├── migrate.sh
+│   ├── migrate.ps1
+│   ├── add-project-memory.sh
+│   └── add-project-memory.ps1
+├── helpers/          # Runtime helper scripts (Python)
+│   ├── detect_agent.py
+│   ├── prepare_task_prompt.py
+│   └── dispatch_analysis.py
+└── README.md
+```
+
+---
+
+## Installation Scripts (`install/`)
 
 ### Migration Scripts
 
 | Script | Platform | Description |
 |--------|----------|-------------|
-| `migrate.sh` | macOS/Linux | Migrate existing project to Claude Forge |
-| `migrate.ps1` | Windows | Migrate existing project to Claude Forge |
+| `install/migrate.sh` | macOS/Linux | Migrate existing project to Claude Forge |
+| `install/migrate.ps1` | Windows | Migrate existing project to Claude Forge |
 
 **Usage:**
 ```bash
 # macOS/Linux
-./scripts/migrate.sh
+./scripts/install/migrate.sh
 
 # Windows PowerShell
-.\scripts\migrate.ps1
+.\scripts\install\migrate.ps1
 ```
 
 **What Migration Does:**
@@ -40,16 +58,16 @@ These scripts add specific features to projects that already have Claude Forge i
 
 | Script | Platform | Description |
 |--------|----------|-------------|
-| `add-project-memory.sh` | macOS/Linux | Add Project Memory feature |
-| `add-project-memory.ps1` | Windows | Add Project Memory feature |
+| `install/add-project-memory.sh` | macOS/Linux | Add Project Memory feature |
+| `install/add-project-memory.ps1` | Windows | Add Project Memory feature |
 
 **Usage:**
 ```bash
 # macOS/Linux
-./scripts/add-project-memory.sh
+./scripts/install/add-project-memory.sh
 
 # Windows PowerShell
-.\scripts\add-project-memory.ps1
+.\scripts\install\add-project-memory.ps1
 ```
 
 **What It Installs:**
@@ -69,7 +87,7 @@ These scripts add specific features to projects that already have Claude Forge i
 
 ---
 
-## Running Scripts
+## Running Installation Scripts
 
 ### Prerequisites
 
@@ -80,7 +98,7 @@ These scripts add specific features to projects that already have Claude Forge i
 
 Make scripts executable before running:
 ```bash
-chmod +x scripts/*.sh
+chmod +x scripts/install/*.sh
 ```
 
 ### Execution Policy (Windows)
@@ -159,14 +177,14 @@ function Backup-IfExists {
 Ensure you're in the claude-forge directory:
 ```bash
 cd /path/to/claude-forge
-ls scripts/
+ls scripts/install/
 ```
 
 ### Permission denied (macOS/Linux)
 
 Make the script executable:
 ```bash
-chmod +x scripts/migrate.sh
+chmod +x scripts/install/migrate.sh
 ```
 
 ### Execution policy error (Windows)
@@ -181,13 +199,100 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 Provide the full absolute path to your project:
 ```bash
 # Good
-./scripts/migrate.sh
+./scripts/install/migrate.sh
 # Enter path: /Users/name/projects/my-app
 
 # Bad (relative paths may not work)
-./scripts/migrate.sh
+./scripts/install/migrate.sh
 # Enter path: ../my-app
 ```
+
+---
+
+## Helper Scripts (`helpers/`)
+
+These scripts reduce context usage during task execution by offloading computation to Python.
+
+### `helpers/detect_agent.py`
+
+Detect the appropriate agent for a task based on content keywords.
+
+```bash
+# From task ID
+python3 scripts/helpers/detect_agent.py T015
+
+# From text directly
+python3 scripts/helpers/detect_agent.py --text "implement user authentication"
+
+# Verbose output with matched keywords
+python3 scripts/helpers/detect_agent.py --text "add payment checkout" --verbose
+
+# JSON output for programmatic use
+python3 scripts/helpers/detect_agent.py --text "write unit tests" --json
+```
+
+**Output:**
+- Agent name (e.g., `security-boss`, `developer`, `quality-engineer`)
+- With `--verbose`: matched keywords, confidence score
+- With `--json`: full analysis as JSON
+
+### `helpers/prepare_task_prompt.py`
+
+Generate a complete Task tool prompt for delegating work to a subagent.
+
+```bash
+# Basic usage
+python3 scripts/helpers/prepare_task_prompt.py T015
+
+# With parent session tracking
+python3 scripts/helpers/prepare_task_prompt.py T015 --parent-session 20240117-143022-a7x9
+
+# For parallel tasks (specify subagent number)
+python3 scripts/helpers/prepare_task_prompt.py T016 --subagent-num 2
+
+# JSON output with metadata
+python3 scripts/helpers/prepare_task_prompt.py T015 --json
+```
+
+**Output:**
+- Complete prompt ready for Task tool invocation
+- Includes: agent summary, task details, scope, instructions, reporting format
+
+### `helpers/dispatch_analysis.py`
+
+Analyze the task registry to find parallelizable work.
+
+```bash
+# Basic analysis
+python3 scripts/helpers/dispatch_analysis.py
+
+# Limit parallel agents
+python3 scripts/helpers/dispatch_analysis.py --max-agents 2
+
+# JSON output
+python3 scripts/helpers/dispatch_analysis.py --json
+
+# Generate prompts for all parallelizable tasks
+python3 scripts/helpers/dispatch_analysis.py --generate-prompts --parent-session abc123
+```
+
+**Output:**
+- Primary task (for main agent)
+- Parallelizable tasks (for subagents)
+- Deferred tasks with reasons (scope conflicts, dependencies, security)
+
+### Token Savings
+
+| Operation | Without Script | With Script |
+|-----------|---------------|-------------|
+| Detect agent | ~200 tokens (read summary, analyze) | ~50 tokens (one bash call) |
+| Prepare prompt | ~500 tokens (read 3 files, assemble) | ~100 tokens (one bash call) |
+| Dispatch analysis | ~800 tokens (read registry, analyze all) | ~100 tokens (one bash call) |
+
+### Requirements
+
+- Python 3.10+
+- No external dependencies (uses only stdlib)
 
 ---
 
