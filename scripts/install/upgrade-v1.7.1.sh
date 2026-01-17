@@ -15,6 +15,10 @@
 #   - Pre-presentation checklist for /reflect resume T###
 #   - Fixed file paths for deployed projects (.claude/agents/summaries/, .claude/scripts/helpers/)
 #   - New /reflect strict on|off|paranoid commands
+#   - Enhanced CLAUDE.md with enforcement markers on all gates and rules
+#
+# IMPORTANT: This script backs up existing files before replacing them.
+#            Backups are stored in .claude/backups/v1.7.1-{timestamp}/
 #
 # Note: Apply upgrade scripts sequentially if multiple versions behind.
 #       e.g., v1.6 → v1.7 → v1.7.1
@@ -33,6 +37,9 @@ NC='\033[0m' # No Color
 # Version info
 UPGRADE_VERSION="1.7.1"
 MIN_VERSION="1.7"
+
+# Timestamp for backups
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
 
 # Get the directory where this script is located (claude-forge root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -112,12 +119,16 @@ echo -e "${GREEN}✓${NC} Current installed version: ${YELLOW}$CURRENT_VERSION${
 # Check if already at or above target version
 if [ "$CURRENT_VERSION" = "$UPGRADE_VERSION" ]; then
     echo ""
-    echo -e "${GREEN}Already at version $UPGRADE_VERSION. No upgrade needed.${NC}"
-    exit 0
+    echo -e "${YELLOW}Already at version $UPGRADE_VERSION.${NC}"
+    read -r -p "Force re-upgrade anyway? [y/N] " response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        echo -e "${GREEN}No upgrade needed.${NC}"
+        exit 0
+    fi
 fi
 
 # Warn if below minimum version
-if [ "$CURRENT_VERSION" != "$MIN_VERSION" ] && [ "$CURRENT_VERSION" != "pre-1.7" ]; then
+if [ "$CURRENT_VERSION" != "$MIN_VERSION" ] && [ "$CURRENT_VERSION" != "pre-1.7" ] && [ "$CURRENT_VERSION" != "$UPGRADE_VERSION" ]; then
     # Simple version comparison - this is a minor upgrade
     if [[ "$CURRENT_VERSION" < "$MIN_VERSION" ]]; then
         echo ""
@@ -131,27 +142,36 @@ if [ "$CURRENT_VERSION" != "$MIN_VERSION" ] && [ "$CURRENT_VERSION" != "pre-1.7"
     fi
 fi
 
+# Create backup directory
+BACKUP_DIR="$CLAUDE_DIR/backups/v$UPGRADE_VERSION-$TIMESTAMP"
+mkdir -p "$BACKUP_DIR"
+echo -e "${GREEN}✓${NC} Backup directory: $BACKUP_DIR"
+
 # Show what will be upgraded
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${CYAN}Upgrade Plan: ${YELLOW}$CURRENT_VERSION${NC} ${CYAN}→${NC} ${GREEN}$UPGRADE_VERSION${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${BLUE}Files to update:${NC}"
-echo -e "  • ${YELLOW}skills/reflect/flows/resume.md${NC} - Process enforcement + path fixes"
-echo -e "  • ${YELLOW}skills/reflect/flows/config.md${NC} - New /reflect strict commands"
-echo -e "  • ${YELLOW}templates/config.json${NC} - processExecution configuration"
-echo -e "  • ${YELLOW}CLAUDE.md${NC} - Version bump"
+echo -e "${BLUE}Directories to sync (backup + replace):${NC}"
+echo -e "  • ${YELLOW}skills/${NC} - All skill files"
+echo -e "  • ${YELLOW}templates/${NC} - Configuration templates"
+echo -e "  • ${YELLOW}reference/${NC} - Reference documentation"
+echo -e "  • ${YELLOW}agents/${NC} - Agent definitions and summaries"
+echo -e "  • ${YELLOW}scripts/${NC} - Helper and install scripts"
+echo -e "  • ${YELLOW}hooks/${NC} - Git hooks"
 echo ""
-echo -e "${BLUE}New features:${NC}"
-echo -e "  • ${GREEN}Process Execution Modes${NC} - normal, strict, paranoid"
-echo -e "  • ${GREEN}Step Enforcement Markers${NC} - ⛔ CRITICAL, 🔒 REQUIRED, 📋 RECOMMENDED"
-echo -e "  • ${GREEN}Pre-Presentation Checklist${NC} - Verify steps before task presentation"
-echo -e "  • ${GREEN}/reflect strict${NC} - Commands to change enforcement mode"
+echo -e "${BLUE}Files to sync (backup + replace):${NC}"
+echo -e "  • ${YELLOW}CLAUDE.md${NC} - Main framework instructions"
 echo ""
-echo -e "${BLUE}Bug fixes:${NC}"
-echo -e "  • ${GREEN}Path corrections${NC} - Scripts now reference .claude/scripts/helpers/"
-echo -e "  • ${GREEN}Agent summaries path${NC} - Now correctly references .claude/agents/summaries/"
+echo -e "${BLUE}Project config to update:${NC}"
+echo -e "  • ${YELLOW}docs/tasks/config.json${NC} - Project configuration (if exists)"
+echo ""
+echo -e "${BLUE}What will be preserved:${NC}"
+echo -e "  • ${GREEN}memories/${NC} - Session files, progress notes (never touched)"
+echo -e "  • ${GREEN}docs/tasks/registry.json${NC} - Task registry (never touched)"
+echo -e "  • ${GREEN}docs/epics/${NC} - Epic definitions (never touched)"
+echo -e "  • ${GREEN}docs/project-memory/${NC} - Project knowledge (never touched)"
 echo ""
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
@@ -167,107 +187,106 @@ echo ""
 
 # Track what was upgraded
 UPGRADED_COUNT=0
-SKIPPED_COUNT=0
+BACKED_UP_COUNT=0
 
-# Function to copy file with backup
-copy_with_backup() {
-    local src="$1"
-    local dest="$2"
-    local desc="$3"
+# Function to backup a file or directory if it exists
+backup_if_exists() {
+    local path="$1"
+    local backup_subdir="$2"
 
-    if [ -f "$dest" ]; then
-        # Create backup
-        cp "$dest" "${dest}.bak"
-        cp "$src" "$dest"
-        echo -e "${GREEN}✓${NC} Updated: $desc (backup: ${dest}.bak)"
-    else
-        # Ensure parent directory exists
-        mkdir -p "$(dirname "$dest")"
-        cp "$src" "$dest"
-        echo -e "${GREEN}✓${NC} Added: $desc"
+    if [ -e "$path" ]; then
+        local basename=$(basename "$path")
+        local backup_path="$BACKUP_DIR/$backup_subdir"
+        mkdir -p "$backup_path"
+        cp -r "$path" "$backup_path/$basename"
+        ((BACKED_UP_COUNT++))
+        return 0
     fi
-    ((UPGRADED_COUNT++))
+    return 1
 }
 
-# Step 1: Update resume.md flow
-echo -e "${BLUE}Step 1: Updating resume.md flow...${NC}"
-if [ -f "$FRAMEWORK_DIR/skills/reflect/flows/resume.md" ]; then
-    mkdir -p "$CLAUDE_DIR/skills/reflect/flows"
-    copy_with_backup \
-        "$FRAMEWORK_DIR/skills/reflect/flows/resume.md" \
-        "$CLAUDE_DIR/skills/reflect/flows/resume.md" \
-        "skills/reflect/flows/resume.md"
-else
-    echo -e "${YELLOW}⚠${NC} resume.md not found in source"
-    ((SKIPPED_COUNT++))
-fi
+# Function to sync a directory from framework to project
+sync_directory() {
+    local src_dir="$1"
+    local dest_dir="$2"
+    local desc="$3"
 
-# Step 2: Update config.md flow
-echo ""
-echo -e "${BLUE}Step 2: Updating config.md flow...${NC}"
-if [ -f "$FRAMEWORK_DIR/skills/reflect/flows/config.md" ]; then
-    mkdir -p "$CLAUDE_DIR/skills/reflect/flows"
-    copy_with_backup \
-        "$FRAMEWORK_DIR/skills/reflect/flows/config.md" \
-        "$CLAUDE_DIR/skills/reflect/flows/config.md" \
-        "skills/reflect/flows/config.md"
-else
-    echo -e "${YELLOW}⚠${NC} config.md not found in source"
-    ((SKIPPED_COUNT++))
-fi
-
-# Step 3: Update config.json template
-echo ""
-echo -e "${BLUE}Step 3: Updating config.json template...${NC}"
-if [ -f "$FRAMEWORK_DIR/templates/config.json" ]; then
-    mkdir -p "$CLAUDE_DIR/templates"
-    copy_with_backup \
-        "$FRAMEWORK_DIR/templates/config.json" \
-        "$CLAUDE_DIR/templates/config.json" \
-        "templates/config.json"
-
-    # Also update docs/tasks/config.json if it exists (deployed project config)
-    if [ -f "$PROJECT_DIR/docs/tasks/config.json" ]; then
-        copy_with_backup \
-            "$FRAMEWORK_DIR/templates/config.json" \
-            "$PROJECT_DIR/docs/tasks/config.json" \
-            "docs/tasks/config.json"
-    fi
-else
-    echo -e "${YELLOW}⚠${NC} config.json template not found in source"
-    ((SKIPPED_COUNT++))
-fi
-
-# Step 4: Update CLAUDE.md
-echo ""
-echo -e "${BLUE}Step 4: Updating CLAUDE.md...${NC}"
-if [ -f "$FRAMEWORK_DIR/CLAUDE.md" ]; then
-    copy_with_backup \
-        "$FRAMEWORK_DIR/CLAUDE.md" \
-        "$CLAUDE_DIR/CLAUDE.md" \
-        "CLAUDE.md"
-else
-    echo -e "${YELLOW}⚠${NC} CLAUDE.md not found in source"
-    ((SKIPPED_COUNT++))
-fi
-
-# Step 5: Sync install scripts (so future upgrades are available)
-echo ""
-echo -e "${BLUE}Step 5: Syncing install scripts...${NC}"
-if [ -d "$FRAMEWORK_DIR/scripts/install" ]; then
-    mkdir -p "$CLAUDE_DIR/scripts/install"
-    for file in "$FRAMEWORK_DIR"/scripts/install/*; do
-        if [ -f "$file" ]; then
-            filename=$(basename "$file")
-            cp "$file" "$CLAUDE_DIR/scripts/install/$filename"
+    if [ -d "$src_dir" ]; then
+        # Backup existing if present
+        if [ -d "$dest_dir" ]; then
+            backup_if_exists "$dest_dir" "$(dirname "${dest_dir#$CLAUDE_DIR/}")" && \
+                echo -e "  ${YELLOW}↳${NC} Backed up existing $desc"
+            rm -rf "$dest_dir"
         fi
-    done
-    echo -e "${GREEN}✓${NC} Synced install scripts"
+
+        # Create parent directory and copy
+        mkdir -p "$(dirname "$dest_dir")"
+        cp -r "$src_dir" "$dest_dir"
+        echo -e "${GREEN}✓${NC} Synced: $desc"
+        ((UPGRADED_COUNT++))
+    else
+        echo -e "${YELLOW}⚠${NC} Source not found: $desc"
+    fi
+}
+
+# Function to sync a single file from framework to project
+sync_file() {
+    local src_file="$1"
+    local dest_file="$2"
+    local desc="$3"
+
+    if [ -f "$src_file" ]; then
+        # Backup existing if present
+        if [ -f "$dest_file" ]; then
+            backup_if_exists "$dest_file" "$(dirname "${dest_file#$CLAUDE_DIR/}")" && \
+                echo -e "  ${YELLOW}↳${NC} Backed up existing $desc"
+        fi
+
+        # Create parent directory and copy
+        mkdir -p "$(dirname "$dest_file")"
+        cp "$src_file" "$dest_file"
+        echo -e "${GREEN}✓${NC} Synced: $desc"
+        ((UPGRADED_COUNT++))
+    else
+        echo -e "${YELLOW}⚠${NC} Source not found: $desc"
+    fi
+}
+
+# Step 1: Sync all framework directories
+echo -e "${BLUE}Step 1: Syncing framework directories...${NC}"
+echo ""
+
+sync_directory "$FRAMEWORK_DIR/skills" "$CLAUDE_DIR/skills" "skills/"
+sync_directory "$FRAMEWORK_DIR/templates" "$CLAUDE_DIR/templates" "templates/"
+sync_directory "$FRAMEWORK_DIR/reference" "$CLAUDE_DIR/reference" "reference/"
+sync_directory "$FRAMEWORK_DIR/agents" "$CLAUDE_DIR/agents" "agents/"
+sync_directory "$FRAMEWORK_DIR/scripts" "$CLAUDE_DIR/scripts" "scripts/"
+sync_directory "$FRAMEWORK_DIR/hooks" "$CLAUDE_DIR/hooks" "hooks/"
+
+# Step 2: Sync CLAUDE.md
+echo ""
+echo -e "${BLUE}Step 2: Syncing CLAUDE.md...${NC}"
+sync_file "$FRAMEWORK_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md" "CLAUDE.md"
+
+# Step 3: Update project config if it exists
+echo ""
+echo -e "${BLUE}Step 3: Updating project configuration...${NC}"
+if [ -f "$PROJECT_DIR/docs/tasks/config.json" ]; then
+    backup_if_exists "$PROJECT_DIR/docs/tasks/config.json" "docs/tasks" && \
+        echo -e "  ${YELLOW}↳${NC} Backed up existing docs/tasks/config.json"
+    cp "$FRAMEWORK_DIR/templates/config.json" "$PROJECT_DIR/docs/tasks/config.json"
+    echo -e "${GREEN}✓${NC} Updated: docs/tasks/config.json"
     ((UPGRADED_COUNT++))
 else
-    echo -e "${YELLOW}⚠${NC} Install scripts not found in source"
-    ((SKIPPED_COUNT++))
+    echo -e "${YELLOW}⚠${NC} No docs/tasks/config.json found (will be created on first use)"
 fi
+
+# Step 4: Make scripts executable
+echo ""
+echo -e "${BLUE}Step 4: Setting permissions...${NC}"
+find "$CLAUDE_DIR/scripts" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+find "$CLAUDE_DIR/hooks" -name "*.sh" -exec chmod +x {} \; 2>/dev/null || true
+echo -e "${GREEN}✓${NC} Made scripts executable"
 
 # Summary
 echo ""
@@ -276,9 +295,10 @@ echo -e "${GREEN}Upgrade Complete!${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "  ${GREEN}✓${NC} Components upgraded: $UPGRADED_COUNT"
-if [ $SKIPPED_COUNT -gt 0 ]; then
-    echo -e "  ${YELLOW}⚠${NC} Components skipped: $SKIPPED_COUNT"
-fi
+echo -e "  ${YELLOW}↳${NC} Files backed up: $BACKED_UP_COUNT"
+echo ""
+echo -e "${CYAN}Backup Location:${NC}"
+echo "  $BACKUP_DIR"
 echo ""
 echo -e "${CYAN}What's New in v$UPGRADE_VERSION:${NC}"
 echo ""
@@ -294,17 +314,19 @@ echo -e "    - ⛔ CRITICAL:    Always enforced, cannot be skipped"
 echo -e "    - 🔒 REQUIRED:    Enforced in strict/paranoid modes"
 echo -e "    - 📋 RECOMMENDED: Enforced only in paranoid mode"
 echo ""
-echo -e "  ${GREEN}Pre-Presentation Checklist${NC}"
-echo -e "    /reflect resume T### now has a checklist before task presentation:"
-echo -e "    - [ ] Session file created"
-echo -e "    - [ ] Task locked in registry"
-echo -e "    - [ ] Project memory loaded"
+echo -e "  ${GREEN}Pre-Work Checklist (CLAUDE.md)${NC}"
+echo -e "    New checklist in CLAUDE.md ensures all gates pass before code:"
+echo -e "    - [ ] Session file exists"
+echo -e "    - [ ] Task ID assigned"
+echo -e "    - [ ] Task locked"
+echo -e "    - [ ] Skill invoked"
 echo -e "    - [ ] Agent summary loaded"
 echo ""
 echo -e "  ${GREEN}New Commands${NC}"
 echo -e "    /reflect strict on       Enable strict mode"
 echo -e "    /reflect strict off      Return to normal mode"
 echo -e "    /reflect strict paranoid Enable maximum enforcement"
+echo -e "    /reflect config          Now shows enforcement levels"
 echo ""
 echo -e "  ${GREEN}Path Fixes${NC}"
 echo -e "    - Scripts now reference .claude/scripts/helpers/"
@@ -315,15 +337,18 @@ echo ""
 echo -e "  1. Navigate to your project:"
 echo -e "     ${YELLOW}cd $PROJECT_DIR${NC}"
 echo ""
-echo -e "  2. Try the new strict mode:"
+echo -e "  2. Check configuration:"
+echo -e "     ${GREEN}/reflect config${NC}"
+echo ""
+echo -e "  3. Try the new strict mode:"
 echo -e "     ${GREEN}/reflect strict on${NC}"
 echo ""
-echo -e "  3. Resume a task to see the new checklist:"
+echo -e "  4. Resume a task to see the new enforcement:"
 echo -e "     ${GREEN}/reflect resume T###${NC}"
 echo ""
-echo -e "${CYAN}Backup Files:${NC}"
-echo "  Updated files have .bak backups in their original locations."
-echo "  You can remove these once you've verified the upgrade."
+echo -e "${CYAN}To Restore from Backup:${NC}"
+echo "  If something went wrong, restore from:"
+echo "  $BACKUP_DIR"
 echo ""
 echo -e "${GREEN}Happy coding with Claude Forge v$UPGRADE_VERSION!${NC}"
 echo ""
