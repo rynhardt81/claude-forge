@@ -322,7 +322,17 @@ Set up the core authentication infrastructure including...
 After finishing work:
 1. Ensure all acceptance criteria met
 2. Commit with task ID: `git commit -m "T002: Implement login form"`
-3. Task automatically marked complete when you move to next task
+3. **Update the task file** (`docs/epics/E##-*/tasks/T###-*.md`):
+   - Set `status: completed` in frontmatter
+   - Check off all acceptance criteria (change `- [ ]` to `- [x]`)
+   - Check off all requirements
+   - Add notes under "Implementation Notes" if needed
+   - Clear any continuation context
+4. **Update the registry** (`docs/tasks/registry.json`):
+   - Set task `status` to `"completed"`
+   - Clear the `lock` field
+
+**BOTH files must be updated.** The registry is the source of truth for status, but the task file provides documentation and audit trail.
 
 ### Handle Blocked Task
 

@@ -1096,8 +1096,14 @@ Files: {task.scope.files}
 2. Implement the task within declared scope ONLY
 3. Run relevant tests
 4. Commit with message: `feat({epic}): {task.name} [Task-ID: {task.id}]`
-5. Update registry: set task status to "completed"
-6. Update your session file, move to completed/
+5. **Update task file** (docs/epics/{epic}/tasks/{task.id}-*.md):
+   - Set `status: completed` in frontmatter
+   - Check off all acceptance criteria (- [x])
+   - Check off all requirements (- [x])
+   - Add completion notes under "Implementation Notes"
+   - Clear any continuation context
+6. Update registry: set task status to "completed", clear lock
+7. Update your session file, move to completed/
 
 ### On Completion
 Report back:
