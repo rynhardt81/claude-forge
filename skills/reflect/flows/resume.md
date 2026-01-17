@@ -10,7 +10,7 @@ This flow uses tiered enforcement. Check `processExecution.mode` in `docs/tasks/
 
 | Mode | Enforces |
 |------|----------|
-| `normal` | ⛔ CRITICAL steps only and when you have the general idea|
+| `normal` | ⛔ CRITICAL steps only|
 | `strict` | ⛔ CRITICAL + 🔒 REQUIRED steps |
 | `paranoid` | ⛔ CRITICAL + 🔒 REQUIRED + 📋 RECOMMENDED steps |
 
