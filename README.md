@@ -802,9 +802,20 @@ done
 │
 ├── skills/                      # Workflow skills
 │   ├── reflect/                 # Session continuity & task mgmt
-│   │   ├── SKILL.md             # Main skill definition
+│   │   ├── SKILL.md             # Routing hub (~200 lines)
+│   │   ├── flows/               # Command-specific flows
+│   │   │   ├── resume.md        # /reflect resume commands
+│   │   │   ├── status.md        # /reflect status commands
+│   │   │   ├── unlock.md        # /reflect unlock, cleanup
+│   │   │   ├── config.md        # /reflect config commands
+│   │   │   └── manual-reflection.md  # /reflect (no args)
+│   │   ├── dispatch/            # Parallel execution flows
+│   │   │   ├── task-dispatch.md      # Task parallelization
+│   │   │   ├── feature-dispatch.md   # Feature parallelization
+│   │   │   └── intent-detection.md   # Intent detection
 │   │   ├── SIGNALS.md           # Learning signals
-│   │   └── ...
+│   │   ├── CHECKPOINTS.md       # Review checkpoints
+│   │   └── UPDATE-RULES.md      # File update rules
 │   ├── new-project/             # Project initialization
 │   │   ├── SKILL.md             # Phase workflow
 │   │   ├── PHASES.md            # Detailed phase instructions
@@ -1081,15 +1092,26 @@ ls docs/tasks/registry.json
 ### Changelog
 
 **v1.7.0** (2026-01-17)
+- **Modularized reflect skill** - Split 1,750-line SKILL.md into focused flow files:
+  - `SKILL.md` now routing hub only (~200 lines)
+  - `flows/resume.md` - Resume commands with task completion instructions
+  - `flows/status.md` - Status commands
+  - `flows/unlock.md` - Unlock and cleanup commands
+  - `flows/config.md` - Configuration commands
+  - `flows/manual-reflection.md` - Session end reflection
+  - `dispatch/task-dispatch.md` - Task parallelization flow
+  - `dispatch/feature-dispatch.md` - Feature parallelization flow
+  - `dispatch/intent-detection.md` - Intent detection flow
+- **Integrated Python helper scripts** into skill flows:
+  - `detect_agent.py` called in `/reflect resume T###` (Step 7)
+  - `dispatch_analysis.py` called in task-dispatch flow (Step 1)
+  - `prepare_task_prompt.py` called when spawning sub-agents (Step 3)
+- **Fixed task status transitions**:
+  - Task set to `in_progress` immediately on resume (Step 4, before loading context)
+  - Added mandatory "Task Completion" section with explicit completion steps
 - Added agent summaries (`agents/summaries/`) for lean context loading (~100 tokens each)
-- Added automatic agent detection in `/reflect resume` based on task keywords
-- Added Python helper scripts (`scripts/helpers/`) for token-efficient operations:
-  - `detect_agent.py` - Detect agent from task content
-  - `prepare_task_prompt.py` - Generate complete Task tool prompts
-  - `dispatch_analysis.py` - Analyze parallelizable work
 - Added task delegation templates (`reference/16-task-delegation-templates.md`)
 - Reorganized scripts into `install/` and `helpers/` subdirectories
-- Updated `/reflect resume` skill with agent detection and summary loading step
 
 **v1.6.0** (2026-01-16)
 - Added Project Memory system for persistent institutional knowledge

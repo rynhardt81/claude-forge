@@ -289,6 +289,27 @@ python3 scripts/helpers/dispatch_analysis.py --generate-prompts --parent-session
 | Prepare prompt | ~500 tokens (read 3 files, assemble) | ~100 tokens (one bash call) |
 | Dispatch analysis | ~800 tokens (read registry, analyze all) | ~100 tokens (one bash call) |
 
+### Integration with Skills
+
+These scripts are called by the reflect skill flows:
+
+| Script | Called By | When |
+|--------|-----------|------|
+| `detect_agent.py` | `skills/reflect/flows/resume.md` | Step 7 of `/reflect resume T###` |
+| `dispatch_analysis.py` | `skills/reflect/dispatch/task-dispatch.md` | Step 1 of dispatch flow |
+| `prepare_task_prompt.py` | `skills/reflect/dispatch/task-dispatch.md` | Step 3 when spawning sub-agents |
+
+**Example from resume.md:**
+```bash
+python3 scripts/helpers/detect_agent.py {task.id}
+```
+
+**Example from task-dispatch.md:**
+```bash
+python3 scripts/helpers/dispatch_analysis.py --json
+python3 scripts/helpers/prepare_task_prompt.py T016 --parent-session 20240117-143022-a7x9 --subagent-num 1
+```
+
 ### Requirements
 
 - Python 3.10+
@@ -301,3 +322,4 @@ python3 scripts/helpers/dispatch_analysis.py --generate-prompts --parent-session
 - [README.md](../README.md) - Main framework documentation
 - [hooks/README.md](../hooks/README.md) - Hook system documentation
 - [templates/README.md](../templates/README.md) - Template documentation
+- [skills/reflect/SKILL.md](../skills/reflect/SKILL.md) - Reflect skill routing hub

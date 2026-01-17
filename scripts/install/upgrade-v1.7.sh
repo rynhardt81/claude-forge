@@ -10,10 +10,11 @@
 #   ./scripts/install/upgrade-v1.7.sh /path/to/project   # Specify project path
 #
 # What's new in v1.7:
+#   - Modularized reflect skill (SKILL.md split into flows/ and dispatch/)
 #   - Agent summaries for token-efficient delegation (agents/summaries/)
-#   - Python helper scripts for task analysis (scripts/helpers/)
+#   - Python helper scripts integrated into skill flows (scripts/helpers/)
 #   - Task delegation templates (reference/16-task-delegation-templates.md)
-#   - Enhanced /reflect skill with agent recommendations
+#   - Fixed task status transitions (in_progress on resume, completion steps)
 #
 # Note: Future versions will have their own upgrade scripts (e.g., upgrade-v1.8.sh)
 #       Apply upgrade scripts sequentially if multiple versions behind.
@@ -133,10 +134,12 @@ echo ""
 echo -e "${BLUE}New files to add:${NC}"
 echo -e "  • ${GREEN}agents/summaries/${NC} - Agent summary files for token-efficient delegation"
 echo -e "  • ${GREEN}scripts/helpers/${NC} - Python helper scripts for task analysis"
+echo -e "  • ${GREEN}skills/reflect/flows/${NC} - Modular command flows (resume, status, config, etc.)"
+echo -e "  • ${GREEN}skills/reflect/dispatch/${NC} - Parallel execution flows"
 echo -e "  • ${GREEN}reference/16-task-delegation-templates.md${NC} - Task delegation templates"
 echo ""
 echo -e "${BLUE}Files to update:${NC}"
-echo -e "  • ${YELLOW}skills/reflect/SKILL.md${NC} - Enhanced reflect skill with agent summaries"
+echo -e "  • ${YELLOW}skills/reflect/SKILL.md${NC} - Now a routing hub (~200 lines, was ~1750)"
 echo -e "  • ${YELLOW}scripts/README.md${NC} - Updated documentation"
 echo -e "  • ${YELLOW}CLAUDE.md${NC} - Updated framework instructions"
 echo ""
@@ -248,9 +251,9 @@ else
     ((SKIPPED_COUNT++))
 fi
 
-# Step 4: Update reflect skill
+# Step 4: Update reflect skill (routing hub)
 echo ""
-echo -e "${BLUE}Step 4: Updating reflect skill...${NC}"
+echo -e "${BLUE}Step 4: Updating reflect skill (routing hub)...${NC}"
 if [ -f "$FRAMEWORK_DIR/skills/reflect/SKILL.md" ]; then
     mkdir -p "$CLAUDE_DIR/skills/reflect"
     copy_with_backup \
@@ -262,9 +265,45 @@ else
     ((SKIPPED_COUNT++))
 fi
 
-# Step 5: Update scripts README
+# Step 5: Add reflect flows
 echo ""
-echo -e "${BLUE}Step 5: Updating scripts documentation...${NC}"
+echo -e "${BLUE}Step 5: Adding reflect flow files...${NC}"
+if [ -d "$FRAMEWORK_DIR/skills/reflect/flows" ]; then
+    mkdir -p "$CLAUDE_DIR/skills/reflect/flows"
+    for file in "$FRAMEWORK_DIR"/skills/reflect/flows/*.md; do
+        if [ -f "$file" ]; then
+            filename=$(basename "$file")
+            cp "$file" "$CLAUDE_DIR/skills/reflect/flows/$filename"
+        fi
+    done
+    echo -e "${GREEN}✓${NC} Added reflect flows ($(ls -1 "$FRAMEWORK_DIR/skills/reflect/flows"/*.md 2>/dev/null | wc -l | tr -d ' ') files)"
+    ((UPGRADED_COUNT++))
+else
+    echo -e "${YELLOW}⚠${NC} Reflect flows not found in source"
+    ((SKIPPED_COUNT++))
+fi
+
+# Step 6: Add reflect dispatch files
+echo ""
+echo -e "${BLUE}Step 6: Adding reflect dispatch files...${NC}"
+if [ -d "$FRAMEWORK_DIR/skills/reflect/dispatch" ]; then
+    mkdir -p "$CLAUDE_DIR/skills/reflect/dispatch"
+    for file in "$FRAMEWORK_DIR"/skills/reflect/dispatch/*.md; do
+        if [ -f "$file" ]; then
+            filename=$(basename "$file")
+            cp "$file" "$CLAUDE_DIR/skills/reflect/dispatch/$filename"
+        fi
+    done
+    echo -e "${GREEN}✓${NC} Added reflect dispatch files ($(ls -1 "$FRAMEWORK_DIR/skills/reflect/dispatch"/*.md 2>/dev/null | wc -l | tr -d ' ') files)"
+    ((UPGRADED_COUNT++))
+else
+    echo -e "${YELLOW}⚠${NC} Reflect dispatch files not found in source"
+    ((SKIPPED_COUNT++))
+fi
+
+# Step 7: Update scripts README
+echo ""
+echo -e "${BLUE}Step 7: Updating scripts documentation...${NC}"
 if [ -f "$FRAMEWORK_DIR/scripts/README.md" ]; then
     mkdir -p "$CLAUDE_DIR/scripts"
     copy_with_backup \
@@ -276,9 +315,9 @@ else
     ((SKIPPED_COUNT++))
 fi
 
-# Step 6: Update CLAUDE.md
+# Step 8: Update CLAUDE.md
 echo ""
-echo -e "${BLUE}Step 6: Updating CLAUDE.md...${NC}"
+echo -e "${BLUE}Step 8: Updating CLAUDE.md...${NC}"
 if [ -f "$FRAMEWORK_DIR/CLAUDE.md" ]; then
     copy_with_backup \
         "$FRAMEWORK_DIR/CLAUDE.md" \
@@ -289,9 +328,9 @@ else
     ((SKIPPED_COUNT++))
 fi
 
-# Step 7: Sync install scripts
+# Step 9: Sync install scripts
 echo ""
-echo -e "${BLUE}Step 7: Syncing install scripts...${NC}"
+echo -e "${BLUE}Step 9: Syncing install scripts...${NC}"
 if [ -d "$FRAMEWORK_DIR/scripts/install" ]; then
     mkdir -p "$CLAUDE_DIR/scripts/install"
     for file in "$FRAMEWORK_DIR"/scripts/install/*; do
@@ -320,6 +359,15 @@ fi
 echo ""
 echo -e "${CYAN}What's New in v$UPGRADE_VERSION:${NC}"
 echo ""
+echo -e "  ${GREEN}Modularized Reflect Skill${NC}"
+echo -e "    SKILL.md refactored from ~1750 lines to ~200 line routing hub."
+echo -e "    Command-specific flows loaded on-demand for token efficiency."
+echo -e "    - flows/resume.md      - Session resume logic"
+echo -e "    - flows/status.md      - Task/epic status display"
+echo -e "    - flows/config.md      - Dispatch/intent configuration"
+echo -e "    - dispatch/*.md        - Parallel execution flows"
+echo -e "    Location: $CLAUDE_DIR/skills/reflect/"
+echo ""
 echo -e "  ${GREEN}Agent Summaries${NC}"
 echo -e "    Token-efficient agent summaries for delegation decisions."
 echo -e "    Location: $CLAUDE_DIR/agents/summaries/"
@@ -331,8 +379,9 @@ echo -e "    - dispatch_analysis.py - Analyzes tasks for parallel execution"
 echo -e "    - prepare_task_prompt.py - Prepares context-rich prompts"
 echo -e "    Location: $CLAUDE_DIR/scripts/helpers/"
 echo ""
-echo -e "  ${GREEN}Enhanced /reflect Skill${NC}"
-echo -e "    Now loads agent summaries for better delegation decisions."
+echo -e "  ${GREEN}Task Status Fixes${NC}"
+echo -e "    - Tasks now marked in_progress immediately on resume"
+echo -e "    - Explicit completion steps ensure tasks are marked completed"
 echo ""
 echo -e "${CYAN}Next Steps:${NC}"
 echo ""

@@ -827,7 +827,7 @@ Key: Intent detection does not bypass the skill system.
 | `CLAUDE.md` | Added Intelligent Dispatch section + Step 7 |
 | `reference/11-intelligent-dispatch.md` | Detailed algorithms and patterns |
 | `.claude/memories/.dispatch-config.json` | Default configuration |
-| `skills/reflect/SKILL.md` | Config commands + 3 analysis flows |
+| `skills/reflect/SKILL.md` | Routing hub (modularized in v1.7 into flows/ and dispatch/ subdirs) |
 | `skills/implement-features/SKILL.md` | Parallel execution mode |
 | `mcp-servers/feature-tracking/database.py` | ParallelGroup model, category matrix |
 | `mcp-servers/feature-tracking/server.py` | 5 new dispatch MCP tools |

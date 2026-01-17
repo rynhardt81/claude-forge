@@ -28,6 +28,23 @@ Skills are reusable workflows that automate common development tasks. Each skill
 
 **Purpose:** Session management, task tracking, parallel session coordination, and intelligent dispatch configuration.
 
+**Architecture:** Modular design for token efficiency. The main `SKILL.md` (~200 lines) routes to command-specific flows loaded on-demand:
+
+```
+skills/reflect/
+├── SKILL.md              # Routing hub, session protocol, task state machine
+├── flows/
+│   ├── resume.md         # /reflect resume handling
+│   ├── status.md         # /reflect status handling
+│   ├── unlock.md         # /reflect unlock/cleanup handling
+│   ├── config.md         # /reflect config handling
+│   └── manual-reflection.md  # /reflect (no args) handling
+└── dispatch/
+    ├── task-dispatch.md      # Parallel task execution
+    ├── feature-dispatch.md   # Feature database parallelization
+    └── intent-detection.md   # Natural language skill detection
+```
+
 **Invocation:**
 ```
 /reflect                      # Capture session learnings
@@ -571,8 +588,14 @@ skills/
     ├── SKILL.md           # Main skill definition (required)
     ├── PHASES.md          # Detailed phase instructions (optional)
     ├── CHECKPOINTS.md     # User confirmation points (optional)
-    └── *-RULES.md         # Domain-specific rules (optional)
+    ├── *-RULES.md         # Domain-specific rules (optional)
+    ├── flows/             # Modular command flows (optional, for complex skills)
+    │   └── *.md           # Command-specific handlers
+    └── dispatch/          # Parallel execution flows (optional)
+        └── *.md           # Dispatch logic files
 ```
+
+**Note:** The `flows/` and `dispatch/` subdirectories are used for complex skills like `reflect` to keep the main SKILL.md small (~200 lines) and load command-specific logic on-demand for token efficiency.
 
 ### SKILL.md Format
 
