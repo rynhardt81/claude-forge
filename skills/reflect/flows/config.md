@@ -1,6 +1,6 @@
 # Config Flow
 
-Handles `/reflect config`, `/reflect dispatch`, `/reflect intent`, `/reflect on`, and `/reflect off` commands.
+Handles `/reflect config`, `/reflect dispatch`, `/reflect intent`, `/reflect strict`, `/reflect on`, and `/reflect off` commands.
 
 ---
 
@@ -14,6 +14,8 @@ Show current configuration.
 ## Reflect Configuration
 
 ### Task Management
+Controls how tasks are locked, assigned, and managed across sessions.
+
 | Setting | Value | Allowed Values | Description |
 |---------|-------|----------------|-------------|
 | lockTimeout | 3600 | 60-86400 (seconds) | Seconds before task lock is stale |
@@ -22,6 +24,8 @@ Show current configuration.
 | autoAssignNextTask | true | true, false | Auto-suggest next task |
 
 ### Session Management
+Controls context window usage and session lifecycle.
+
 | Setting | Value | Allowed Values | Description |
 |---------|-------|----------------|-------------|
 | sessionStaleTimeout | 86400 | 3600-604800 (seconds) | Seconds before session is stale |
@@ -30,6 +34,8 @@ Show current configuration.
 | warningThreshold | 150000 | 50000-400000 | Warn when context exceeds |
 
 ### Intelligent Dispatch
+Controls automatic sub-agent spawning and skill detection from natural language.
+
 | Setting | Value | Allowed Values | Description |
 |---------|-------|----------------|-------------|
 | dispatch.enabled | true | true, false | Automatic sub-agent dispatch |
@@ -39,13 +45,27 @@ Show current configuration.
 | intentDetection.mode | suggest | suggest, off | Suggests skills, waits for confirm |
 | intentDetection.confidenceThreshold | 0.7 | 0.5-1.0 | Min confidence to suggest |
 
+### Process Execution
+Controls how strictly flow steps are enforced during skill execution.
+
+| Setting | Value | Allowed Values | Description |
+|---------|-------|----------------|-------------|
+| processExecution.mode | normal | normal, strict, paranoid | Flow step enforcement level |
+
+**Enforcement Levels:**
+- `normal`: Only ⛔ CRITICAL steps enforced
+- `strict`: ⛔ CRITICAL + 🔒 REQUIRED steps enforced
+- `paranoid`: All marked steps enforced (⛔ + 🔒 + 📋)
+
 ### Auto-Reflection
+Controls automatic session reflection and knowledge capture at session end.
+
 | Setting | Value | Allowed Values |
 |---------|-------|----------------|
 | enabled | off | on, off |
 | approvalMode | batch | batch, individual |
 
-Use `/reflect config dispatch` or `/reflect config intent` for detailed settings.
+Use `/reflect config dispatch`, `/reflect config intent`, or `/reflect strict` for detailed settings.
 ```
 
 ---
@@ -337,4 +357,84 @@ Update intent detection settings with `/reflect config <key> <value>`:
 
 # Add exclusion pattern
 /reflect config intentDetection.excludePatterns.add "tell me about"
+```
+
+---
+
+## `/reflect strict on`
+
+Enable strict process execution mode.
+
+**Flow:**
+
+1. Set `processExecution.mode = "strict"` in config
+2. Confirm change
+
+**Output:**
+
+```markdown
+## Strict Mode Enabled
+
+Process execution is now **strict**.
+
+Flow steps marked with ⛔ CRITICAL and 🔒 REQUIRED will be enforced:
+- Steps must be added to TodoWrite
+- Steps must be executed in order
+- Steps must be marked complete before proceeding
+
+Use `/reflect strict off` to return to normal mode.
+Use `/reflect strict paranoid` for maximum enforcement.
+```
+
+---
+
+## `/reflect strict off`
+
+Disable strict mode (return to normal).
+
+**Output:**
+
+```markdown
+## Strict Mode Disabled
+
+Process execution is now **normal**.
+
+Only ⛔ CRITICAL steps are enforced.
+🔒 REQUIRED and 📋 RECOMMENDED steps are guidance only.
+
+Use `/reflect strict on` to re-enable.
+```
+
+---
+
+## `/reflect strict paranoid`
+
+Enable paranoid process execution mode.
+
+**Output:**
+
+```markdown
+## Paranoid Mode Enabled
+
+Process execution is now **paranoid**.
+
+ALL marked steps (⛔ CRITICAL, 🔒 REQUIRED, 📋 RECOMMENDED) will be enforced:
+- Every marked step must be added to TodoWrite
+- Every marked step must be executed
+- Every marked step must be verified complete
+
+Use `/reflect strict off` to return to normal mode.
+```
+
+---
+
+## Process Execution Configuration Settings
+
+Update process execution settings with `/reflect config <key> <value>`:
+
+```
+# Set mode directly
+/reflect config processExecution.mode normal    # Only CRITICAL enforced
+/reflect config processExecution.mode strict    # CRITICAL + REQUIRED enforced
+/reflect config processExecution.mode paranoid  # All marked steps enforced
 ```

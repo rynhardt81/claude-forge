@@ -4,6 +4,43 @@ Handles `/reflect resume`, `/reflect resume E##`, and `/reflect resume T###` com
 
 ---
 
+## Process Enforcement
+
+This flow uses tiered enforcement. Check `processExecution.mode` in `docs/tasks/config.json`:
+
+| Mode | Enforces |
+|------|----------|
+| `normal` | ⛔ CRITICAL steps only |
+| `strict` | ⛔ CRITICAL + 🔒 REQUIRED steps |
+| `paranoid` | ⛔ CRITICAL + 🔒 REQUIRED + 📋 RECOMMENDED steps |
+
+**For enforced steps:** Add to TodoWrite, execute, mark complete. Do not skip.
+
+### `/reflect resume` Enforcement
+| Step | Level | Description |
+|------|-------|-------------|
+| 1 | ⛔ CRITICAL | Complete Session Start Protocol |
+| 5 | ⛔ CRITICAL | Read Task Registry |
+| 7 | 📋 RECOMMENDED | Confirm and Continue |
+
+### `/reflect resume E##` Enforcement
+| Step | Level | Description |
+|------|-------|-------------|
+| 1 | ⛔ CRITICAL | Complete Session Start Protocol |
+| 2 | ⛔ CRITICAL | Load Epic File |
+| 4 | 🔒 REQUIRED | Identify Next Task |
+
+### `/reflect resume T###` Enforcement
+| Step | Level | Description |
+|------|-------|-------------|
+| 1 | ⛔ CRITICAL | Complete Session Start Protocol |
+| 2 | ⛔ CRITICAL | Validate Task |
+| 4 | ⛔ CRITICAL | Acquire Lock |
+| 6 | 🔒 REQUIRED | Load Relevant Project Memory |
+| 7 | 🔒 REQUIRED | Detect Agent and Load Summary |
+
+---
+
 ## `/reflect resume`
 
 Resume from last session with full context.
@@ -194,26 +231,37 @@ Resume a specific task.
 - [BUG-015] Connection Pool Exhaustion
 ```
 
-7. **Detect Agent and Load Summary**
+7. **Detect Agent and Load Summary** 🔒 REQUIRED
 
    Use the helper script to detect the appropriate agent:
 
    ```bash
-   python3 scripts/helpers/detect_agent.py {task.id}
+   python3 .claude/scripts/helpers/detect_agent.py {task.id}
    ```
 
    **Example output:**
    ```
    Agent: @security-boss
-   Summary: agents/summaries/security-boss.md
+   Summary: .claude/agents/summaries/security-boss.md
    Confidence: high
    Matched: auth, token, session
    ```
 
-   **Then load the summary file** returned by the script (~80-100 tokens).
+   **Then load the summary file** at `.claude/agents/summaries/{agent}.md` (~80-100 tokens).
    This becomes the behavioral guidance for task execution.
 
-   **Fallback (if script unavailable):** Default to `@developer` with `agents/summaries/developer.md`
+   **Fallback (if script unavailable):** Default to `@developer` with `.claude/agents/summaries/developer.md`
+
+## Pre-Presentation Checklist
+
+**Before proceeding to step 8, verify ALL items:**
+
+- [ ] Session file created in `.claude/memories/sessions/active/`
+- [ ] Task locked in `docs/tasks/registry.json`
+- [ ] Project memory loaded (or noted as N/A if `docs/project-memory/` doesn't exist)
+- [ ] Agent detected and summary loaded from `.claude/agents/summaries/`
+
+**If any CRITICAL (⛔) or REQUIRED (🔒) item is unchecked, STOP and complete it.**
 
 8. **Present Task Context**
 

@@ -1086,10 +1086,30 @@ ls docs/tasks/registry.json
 
 ## Version
 
-**Framework Version:** 1.7.0
+**Framework Version:** 1.7.1
 **Last Updated:** 2026-01-17
 
 ### Changelog
+
+**v1.7.1** (2026-01-17)
+- **Process Execution Modes** - Tiered enforcement for flow steps:
+  - `normal`: Only ⛔ CRITICAL steps enforced (default)
+  - `strict`: ⛔ CRITICAL + 🔒 REQUIRED steps enforced
+  - `paranoid`: All marked steps (⛔ + 🔒 + 📋) enforced
+- **Step Enforcement Markers** - Flow files now tag steps with enforcement levels
+- **Pre-Presentation Checklist** - `/reflect resume T###` now includes verification checklist:
+  - Session file created
+  - Task locked in registry
+  - Project memory loaded (or N/A)
+  - Agent summary loaded
+- **New `/reflect strict` commands**:
+  - `/reflect strict on` - Enable strict mode
+  - `/reflect strict off` - Return to normal mode
+  - `/reflect strict paranoid` - Enable maximum enforcement
+- **Path fixes** for deployed projects:
+  - Scripts now reference `.claude/scripts/helpers/`
+  - Agent summaries now reference `.claude/agents/summaries/`
+- Added `processExecution` configuration in `config.json`
 
 **v1.7.0** (2026-01-17)
 - **Modularized reflect skill** - Split 1,750-line SKILL.md into focused flow files:

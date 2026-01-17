@@ -24,6 +24,29 @@
     "warningThreshold": 150000,
     "autoSaveInterval": 300
   },
+  "processExecution": {
+    "mode": "normal",
+    "description": "Controls how strictly flow steps are enforced",
+    "modes": {
+      "normal": {
+        "description": "Only CRITICAL steps are enforced",
+        "enforces": ["CRITICAL"]
+      },
+      "strict": {
+        "description": "CRITICAL and REQUIRED steps are enforced",
+        "enforces": ["CRITICAL", "REQUIRED"]
+      },
+      "paranoid": {
+        "description": "All marked steps are enforced",
+        "enforces": ["CRITICAL", "REQUIRED", "RECOMMENDED"]
+      }
+    },
+    "markers": {
+      "CRITICAL": "⛔",
+      "REQUIRED": "🔒",
+      "RECOMMENDED": "📋"
+    }
+  },
   "testing": {
     "mode": "standard",
     "modes": {
