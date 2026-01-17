@@ -10,7 +10,7 @@ This flow uses tiered enforcement. Check `processExecution.mode` in `docs/tasks/
 
 | Mode | Enforces |
 |------|----------|
-| `normal` | ⛔ CRITICAL steps only |
+| `normal` | ⛔ CRITICAL steps only and when you have the general idea|
 | `strict` | ⛔ CRITICAL + 🔒 REQUIRED steps |
 | `paranoid` | ⛔ CRITICAL + 🔒 REQUIRED + 📋 RECOMMENDED steps |
 
@@ -20,7 +20,11 @@ This flow uses tiered enforcement. Check `processExecution.mode` in `docs/tasks/
 | Step | Level | Description |
 |------|-------|-------------|
 | 1 | ⛔ CRITICAL | Complete Session Start Protocol |
+| 2 | ⛔ CRITICAL | Gather Context from All Sources |
+| 3 | ⛔ CRITICAL | Read Memory Files |
+| 4 | ⛔ CRITICAL | Load Project Memory |
 | 5 | ⛔ CRITICAL | Read Task Registry |
+| 6 | ⛔ CRITICAL | Present Combined Context |
 | 7 | 📋 RECOMMENDED | Confirm and Continue |
 
 ### `/reflect resume E##` Enforcement
@@ -28,16 +32,20 @@ This flow uses tiered enforcement. Check `processExecution.mode` in `docs/tasks/
 |------|-------|-------------|
 | 1 | ⛔ CRITICAL | Complete Session Start Protocol |
 | 2 | ⛔ CRITICAL | Load Epic File |
-| 4 | 🔒 REQUIRED | Identify Next Task |
+| 3 | ⛔ CRITICAL | Load Minimal Context |
+| 4 | ⛔ CRITICAL | Identify Next Task |
+| 5 | ⛔ CRITICAL | Present Epic Context |
 
 ### `/reflect resume T###` Enforcement
 | Step | Level | Description |
 |------|-------|-------------|
 | 1 | ⛔ CRITICAL | Complete Session Start Protocol |
 | 2 | ⛔ CRITICAL | Validate Task |
+| 3 | ⛔ CRITICAL | Check Lock Status |
 | 4 | ⛔ CRITICAL | Acquire Lock |
-| 6 | 🔒 REQUIRED | Load Relevant Project Memory |
-| 7 | 🔒 REQUIRED | Detect Agent and Load Summary |
+| 5 | ⛔ CRITICAL | Load Minimal Context |
+| 6 | ⛔ CRITICAL | Load Relevant Project Memory |
+| 7 | ⛔ CRITICAL | Detect Agent and Load Summary |
 
 ---
 
@@ -231,7 +239,7 @@ Resume a specific task.
 - [BUG-015] Connection Pool Exhaustion
 ```
 
-7. **Detect Agent and Load Summary** 🔒 REQUIRED
+7. **Detect Agent and Load Summary** ⛔ CRITICAL
 
    Use the helper script to detect the appropriate agent:
 
