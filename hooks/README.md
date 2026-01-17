@@ -41,9 +41,37 @@ Two templates are available:
 | Template | Location | Contents |
 |----------|----------|----------|
 | **Comprehensive** | `templates/settings.json` | Hooks + Permissions + MCP servers |
-| **Hooks-only** | `hooks/settings.example.json` | Just hooks configuration |
+| **Hooks-only** | `hooks/settings.example.json` | Hooks + Framework permissions |
 
 The comprehensive template is recommended for most projects.
+
+## Framework Permissions
+
+Both templates include permissions that allow Claude to manage framework files without prompting:
+
+```json
+"permissions": {
+  "allow": [
+    "Read(.claude/**)",
+    "Edit(.claude/**)",
+    "Write(.claude/**)",
+    "Read(docs/tasks/**)",
+    "Edit(docs/tasks/**)",
+    "Write(docs/tasks/**)",
+    "Read(docs/epics/**)",
+    "Read(docs/project-memory/**)",
+    "Edit(docs/project-memory/**)"
+  ]
+}
+```
+
+This allows:
+- **`.claude/**`** - Full read/write for session files, memories, configs
+- **`docs/tasks/**`** - Full read/write for task registry and task files
+- **`docs/epics/**`** - Read access for epic definitions
+- **`docs/project-memory/**`** - Read/write for project memory files
+
+Without these permissions, Claude will prompt for access when running `/reflect resume` or managing sessions.
 
 ## Hook Configuration
 
