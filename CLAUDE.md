@@ -6,17 +6,19 @@ This file provides Claude Code with **mandatory operating instructions** for thi
 
 ---
 
-## ABSOLUTE GATES: NO CODE WITHOUT THESE
+## ABSOLUTE GATES ⛔ CRITICAL
 
 **YOU CANNOT WRITE A SINGLE LINE OF CODE until ALL gates are passed.**
 
-| Gate | Requirement | If Not Met |
-|------|-------------|------------|
-| **1. SESSION ACTIVE** | Session file exists in `.claude/memories/sessions/active/` | CREATE ONE FIRST |
-| **2. EPICS/TASKS EXIST** | `docs/tasks/registry.json` exists with epics and tasks | Run `/new-project --current` |
-| **3. WORKING ON TASK** | You have a specific task ID from registry | Run `/reflect resume T###` |
-| **4. SKILL INVOKED** | Development skills invoked via Skill tool (not memory) | INVOKE SKILL TOOL |
-| **5. AGENT DELEGATED** | Specialized work uses appropriate agent | DELEGATE TO AGENT |
+All gates are ⛔ CRITICAL - enforced in ALL modes, no exceptions.
+
+| Gate | Requirement | If Not Met | Enforcement |
+|------|-------------|------------|-------------|
+| **1. SESSION ACTIVE** ⛔ | Session file exists in `.claude/memories/sessions/active/` | CREATE ONE FIRST | Hook + Rule |
+| **2. EPICS/TASKS EXIST** ⛔ | `docs/tasks/registry.json` exists with epics and tasks | Run `/new-project --current` | Hook + Rule |
+| **3. WORKING ON TASK** ⛔ | You have a specific task ID from registry | Run `/reflect resume T###` | Rule |
+| **4. SKILL INVOKED** ⛔ | Development skills invoked via Skill tool (not memory) | INVOKE SKILL TOOL | Rule |
+| **5. AGENT DELEGATED** ⛔ | Specialized work uses appropriate agent | DELEGATE TO AGENT | Rule |
 
 **Exception:** Framework maintenance in `.claude/` directory bypasses Gate 2.
 
@@ -28,22 +30,38 @@ User Request → Gate 1 (Session?) → Gate 2 (Registry?) → Gate 3 (Task?) →
               Create session    /new-project        /reflect resume   Invoke Skill     Delegate to agent
 ```
 
+### Pre-Work Checklist ⛔ CRITICAL
+
+**Before writing ANY implementation code, verify via TodoWrite:**
+
+- [ ] Session file exists in `.claude/memories/sessions/active/`
+- [ ] Task ID assigned from `docs/tasks/registry.json`
+- [ ] Task locked with your session ID
+- [ ] Skill invoked via Skill tool (not from memory)
+- [ ] Agent detected and summary loaded from `.claude/agents/summaries/`
+
+**If ANY item is unchecked, STOP and complete it before proceeding.**
+
 ---
 
-## 12 INVIOLABLE RULES
+## 12 INVIOLABLE RULES ⛔ CRITICAL
 
-1. **Never start work without session protocol** - No exceptions, not even "quick" tasks
-2. **Never write code without epics and tasks** - ALL work needs task IDs
-3. **Never skip skill invocation** - Skills evolve; always invoke via Skill tool
-4. **Never skip agent delegation** - Specialized work requires specialized agents
-5. **Never modify files outside declared scope** - Update session file first to expand
-6. **Never assume requirements** - ASK for clarification when ambiguous
-7. **Always commit after each task** - Include task ID in commit message
-8. **Never skip conflict detection** - Check active sessions before modifying files
-9. **Append-only for progress notes** - NEVER overwrite `.claude/memories/progress-notes.md`
-10. **Update session file in real-time** - Don't wait until session end
-11. **Create tasks for ALL work** - New feature, bug fix, refactor → task first
-12. **Epics MUST have tasks** - Empty epics are invalid
+All rules below are ⛔ CRITICAL - enforced in ALL modes.
+
+| # | Rule | Enforcement |
+|---|------|-------------|
+| 1 | **Never start work without session protocol** - No exceptions, not even "quick" tasks | ⛔ CRITICAL |
+| 2 | **Never write code without epics and tasks** - ALL work needs task IDs | ⛔ CRITICAL |
+| 3 | **Never skip skill invocation** - Skills evolve; always invoke via Skill tool | ⛔ CRITICAL |
+| 4 | **Never skip agent delegation** - Specialized work requires specialized agents | ⛔ CRITICAL |
+| 5 | **Never modify files outside declared scope** - Update session file first to expand | ⛔ CRITICAL |
+| 6 | **Never assume requirements** - ASK for clarification when ambiguous | ⛔ CRITICAL |
+| 7 | **Always commit after each task** - Include task ID in commit message | ⛔ CRITICAL |
+| 8 | **Never skip conflict detection** - Check active sessions before modifying files | ⛔ CRITICAL |
+| 9 | **Append-only for progress notes** - NEVER overwrite `.claude/memories/progress-notes.md` | ⛔ CRITICAL |
+| 10 | **Update session file in real-time** - Don't wait until session end | ⛔ CRITICAL |
+| 11 | **Create tasks for ALL work** - New feature, bug fix, refactor → task first | ⛔ CRITICAL |
+| 12 | **Epics MUST have tasks** - Empty epics are invalid | ⛔ CRITICAL |
 
 ---
 
