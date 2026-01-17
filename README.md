@@ -46,10 +46,10 @@ A comprehensive framework for AI-assisted software development with Claude Code.
                 - - ❌ Difficulty coordinating parallel work
                   - - ❌ Security and validation gaps
                    
-                    - ### **The Claude Forge Solution**
-                   
-                    - #### **1. Intelligent Dispatch System** 🔄
-                    - Automatically parallelize work without conflicts:
+                    ### **The Claude Forge Solution**
+                 
+                    #### **1. Intelligent Dispatch System** 🔄
+                    - Automatically parallelize work without conflicts
                     - - Analyzes task dependencies to find independent work clusters
                       - - Spawns multiple sub-agents to work in parallel
                         - - Detects and prevents scope conflicts (no race conditions)
@@ -58,59 +58,58 @@ A comprehensive framework for AI-assisted software development with Claude Code.
                             - **Use Case:** Working on authentication AND dashboard AND payment features simultaneously—all managed automatically.
                            
                             - #### **2. Project Memory** 💾
-                            - Never lose institutional knowledge again:
-                            - - Persistent storage of bug patterns, design decisions, code patterns, and key facts
-                              - - Full-text searchable archive
-                                - - Automatically integrated into new sessions
-                                  - - Survives session breaks without context loss
-                                   
-                                    - **Use Case:** "Why did we choose Postgres?" → Instantly find the decision record and rationale.
-                                   
-                                    - #### **3. Epic/Task Management with Dependencies** 📊
-                                    - Structure large projects reliably:
-                                    - - Organize work into epics and atomic tasks
-                                      - - Declare explicit dependencies between tasks
-                                        - - Automatic task state management (pending → ready → in_progress → completed)
-                                          - - Lock management prevents concurrent modifications
-                                            - - Supports parallel work on independent tasks
-                                             
-                                              - **Use Case:** Feature A depends on API refactoring (Task 1). While Task 1 runs, work continues on parallel Feature B.
-                                             
-                                              - #### **4. 15 Specialized Agents** 👥
-                                              - The right person for every role:
-                                              - - **Developer** - Code implementation
-                                                - - **Architect** - System design and ADRs
-                                                  - - **Project Manager** - Requirements and scope
-                                                    - - **Security Boss** - Auth, payments, security
-                                                      - - **Quality Engineer** - Testing and verification
-                                                        - - **DevOps** - CI/CD, deployment
-                                                          - - **Performance Enhancer** - Profiling and optimization
-                                                            - - ...and 8 more specialized roles
-                                                             
-                                                              - Route work to the perfect agent: `@architect explain this design decision`
-                                                             
-                                                              - #### **5. Reusable Skills** 🎯
-                                                              - Workflows that actually work:
-                                                              - - `/new-project` - Full project initialization with PRD, architecture, tasks
-                                                                - - `/reflect resume` - Seamless session continuation with full context
-                                                                  - - `/new-feature` - Add features with PRD, tests, and deployment
-                                                                    - - `/fix-bug` - Debug with integrated knowledge base
-                                                                      - - `/refactor` - Restructure code safely
-                                                                        - - `/create-pr` - Generate polished pull requests
-                                                                          - - `/pdf` - Document processing and manipulation
-                                                                            - - ...more specialized workflows
-                                                                             
-                                                                              - #### **6. Hook Enforcement** 🛡️
-                                                                              - Mandatory security gates (not just suggestions):
-                                                                              - - Blocks code writes without active session/task registry
-                                                                                - - Prevents modifications to protected files (.env, .git/)
-                                                                                  - - Enforces command allowlists
-                                                                                    - - Saves context before compaction
-                                                                                      - - Non-negotiable project rules
-                                                                                       
-                                                                                        - ---
-
-                                                                                        ## 📊 Real-World Impact
+                            - - Never lose institutional knowledge again
+                              - - Persistent storage of bug patterns, design decisions, code patterns, and key facts
+                                - - Full-text searchable archive
+                                  - - Automatically integrated into new sessions
+                                    - - Survives session breaks without context loss
+                                     
+                                      - **Use Case:** "Why did we choose Postgres?" → Instantly find the decision record and rationale.
+                                     
+                                      - #### **3. Epic/Task Management with Dependencies** 📊
+                                      - - Structure large projects reliably
+                                        - - Organize work into epics and atomic tasks
+                                          - - Declare explicit dependencies between tasks
+                                            - - Automatic task state management (pending → ready → in_progress → completed)
+                                              - - Lock management prevents concurrent modifications
+                                                - - Supports parallel work on independent tasks
+                                                 
+                                                  - **Use Case:** Feature A depends on API refactoring (Task 1). While Task 1 runs, work continues on parallel Feature B.
+                                                 
+                                                  - #### **4. 15 Specialized Agents** 👥
+                                                  - - The right person for every role
+                                                    - - Developer - Code implementation
+                                                      - - Architect - System design and ADRs
+                                                        - - Project Manager - Requirements and scope
+                                                          - - Security Boss - Auth, payments, security
+                                                            - - Quality Engineer - Testing and verification
+                                                              - - DevOps - CI/CD, deployment
+                                                                - - Performance Enhancer - Profiling and optimization
+                                                                  - - ...and 8 more specialized roles
+                                                                   
+                                                                    - Route work to the perfect agent: `@architect explain this design decision`
+                                                                   
+                                                                    - #### **5. Reusable Skills** 🎯
+                                                                    - - Workflows that actually work
+                                                                      - - `/new-project` - Full project initialization with PRD, architecture, tasks
+                                                                        - - `/reflect resume` - Seamless session continuation with full context
+                                                                          - - `/new-feature` - Add features with PRD, tests, and deployment
+                                                                            - - `/fix-bug` - Debug with integrated knowledge base
+                                                                              - - `/refactor` - Restructure code safely
+                                                                                - - `/create-pr` - Generate polished pull requests
+                                                                                  - - `/pdf` - Document processing and manipulation
+                                                                                    - - ...more specialized workflows
+                                                                                     
+                                                                                      - #### **6. Hook Enforcement** 🛡️
+                                                                                      - - Mandatory security gates (not just suggestions)
+                                                                                        - - Blocks code writes without active session/task registry
+                                                                                          - - Prevents modifications to protected files (.env, .git/)
+                                                                                            - - Enforces command allowlists
+                                                                                              - - Saves context before compaction
+                                                                                                - - Non-negotiable project rules
+                                                                                                 
+                                                                                                  - ---
+                   
 
                                                                                         ### Before Claude Forge
                                                                                         ```
