@@ -1,5 +1,7 @@
 # CLAUDE.md - Claude Forge Framework
 
+> **Framework Version: 1.7**
+
 This file provides Claude Code with **mandatory operating instructions** for this framework.
 
 ---
