@@ -13,7 +13,136 @@ A comprehensive framework for AI-assisted software development with Claude Code.
 
 ## Table of Contents
 
-- [Overview](#overview)
+- [Build Autonomous AI Applications](#-build-autonomous-ai-applications-with-structured-workflows)
+- [Overview](#overview)#
+- [Why Claude Forge?](#-why-claude-forge)
+- [The Problem](#the-problem)
+- [The Claude Forge Solution](#the-claude-forge-solution)
+- [Real-World Impact](#real-world-impact)
+- [Key Features Summary](#-key-features-summary)
+
+## 🎯 Build Autonomous AI Applications with Structured Workflows
+Claude Forge is a **comprehensive framework for AI-assisted software development** with Claude Code. It enables structured, safe, autonomous development through task management, intelligent dispatch, and reusable skills.
+
+## **30-Second Overview**
+  ✅ **Autonomous development** from requirements to deployment
+  🎯 **Task management** with dependencies for parallel work
+  🔄 **Intelligent dispatch** for automatic sub-agent parallelization
+  💾 **Project memory** for persistent institutional knowledge
+  🛡️ **Hook enforcement** for mandatory security gates
+  👥 **15 specialized agents** for different roles (developer, architect, PM, etc.)
+
+## 🌟 Why Claude Forge?
+    Claude Forge solves a critical problem: **keeping AI development structured, safe, and scalable**. Whether you're building new projects      or enhancing existing codebases, Claude Forge provides the guardrails and patterns for reliable autonomous development.
+## **The Problem**
+  Without structure, AI development becomes chaotic:
+    - ❌ Lost context between sessions
+    - ❌ Duplicate work or conflicting changes
+    - ❌ No visibility into progress or decisions
+    - ❌ Difficulty coordinating parallel work
+    - ❌ Security and validation gaps
+                   
+ ## **The Claude Forge Solution**
+  #### **1. Intelligent Dispatch System** 🔄
+     - Automatically parallelize work without conflicts
+     - Analyzes task dependencies to find independent work clusters
+     - Spawns multiple sub-agents to work in parallel
+     - Detects and prevents scope conflicts (no race conditions)
+     - Saves 50%+ development time for independent features
+     
+     **Use Case:** Working on authentication AND dashboard AND payment features simultaneously—all managed automatically.
+     
+  #### **2. Project Memory** 💾
+     - Never lose institutional knowledge again
+     - Persistent storage of bug patterns, design decisions, code patterns, and key facts
+     - Full-text searchable archive
+     - Automatically integrated into new sessions
+     - Survives session breaks without context loss
+     
+     **Use Case:** "Why did we choose Postgres?" → Instantly find the decision record and rationale.
+  
+  #### **3. Epic/Task Management with Dependencies** 📊
+     - Structure large projects reliably
+     - Organize work into epics and atomic tasks
+     - Declare explicit dependencies between tasks
+     - Automatic task state management (pending → ready → in_progress → completed)
+     - Lock management prevents concurrent modifications
+     - Supports parallel work on independent tasks
+     
+     **Use Case:** Feature A depends on API refactoring (Task 1). While Task 1 runs, work continues on parallel Feature B.
+                                                 
+  #### **4. 15 Specialized Agents** 👥
+     - The right person for every role
+     - Developer - Code implementation
+     - Architect - System design and ADRs
+     - Project Manager - Requirements and scope
+     - Security Boss - Auth, payments, security
+     - Quality Engineer - Testing and verification
+     - DevOps - CI/CD, deployment
+     - Performance Enhancer - Profiling and optimization
+     - ...and 8 more specialized roles
+                                                                   
+     - Route work to the perfect agent: `@architect explain this design decision`
+                                                                   
+  #### **5. Reusable Skills** 🎯
+     - Workflows that actually work
+     - `/new-project` - Full project initialization with PRD, architecture, tasks
+     - `/reflect resume` - Seamless session continuation with full context
+     - `/new-feature` - Add features with PRD, tests, and deployment
+     - `/fix-bug` - Debug with integrated knowledge base
+     - `/refactor` - Restructure code safely
+     - `/create-pr` - Generate polished pull requests
+     - `/pdf` - Document processing and manipulation
+     - ...more specialized workflows
+                                                                                     
+  #### **6. Hook Enforcement** 🛡️
+    - Mandatory security gates (not just suggestions)
+    - Blocks code writes without active session/task registry
+    - Prevents modifications to protected files (.env, .git/)
+    - Enforces command allowlists
+    - Saves context before compaction
+    - Non-negotiable project rules
+                   
+   ### Before Claude Forge
+   ```
+     Session 1: Build auth module        → Lost context when session ends
+     Session 2: "Where did we stop?"      → Re-read all files, duplicate work
+     Session 3: Payment feature           → Conflicts with in-progress refactoring
+     Session 4: "Why is this pattern?"    → No decision history
+  ```
+
+  ### With Claude Forge
+  ```
+    Session 1: /new-project "E-commerce platform"
+      → PRD, ADRs, tasks created automatically
+      → 3 agents dispatched in parallel
+
+    Session 2: /reflect resume
+      → Full context restored
+      → Only changed files reloaded
+      → Ready to continue where you left off
+
+    Session 3: /reflect status --dispatch
+      → Shows which tasks can run in parallel
+      → No conflicts, full coordination
+
+    Session 4: /remember search "why postgres"
+      → Instantly find the decision and rationale
+  ```
+
+## 🚀 Key Features Summary
+
+  | Feature | Benefit | Example |
+  |---------|---------|---------|
+  | **Autonomous Development** | Go from idea to deployed code | `/new-project "SaaS dashboard"` → full implementation |
+  | **Task Management** | Never lose track of progress | Organize 50+ tasks with dependencies |
+  | **Intelligent Dispatch** | Parallel work without chaos | 3 features built simultaneously |
+  | **Project Memory** | Institutional knowledge persists | Find decisions, patterns, bugs instantly |
+  | **15 Agents** | Right tool for every job | Route to architect, PM, security expert |
+  | **Reusable Skills** | Tested workflows | `/new-feature`, `/fix-bug`, `/refactor` |
+  | **Hook Enforcement** | Safety without sacrifice | Mandatory gates for security and consistency |
+  | **Session Continuity** | Never start from scratch | Resume exactly where you left off |
+
 - [Quick Start](#quick-start)
   - [New Project](#new-project)
   - [Existing Project](#existing-project)
