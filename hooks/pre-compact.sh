@@ -10,10 +10,53 @@
 INPUT=$(cat)
 TRIGGER=$(echo "$INPUT" | grep -o '"trigger":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "unknown")
 
+# Check for Phase 3 in-progress
+PHASE3_FILE=".claude/memories/phase3-progress.json"
+PHASE3_STATUS=""
+PHASE3_PROGRESS=""
+
+if [ -f "$PHASE3_FILE" ]; then
+    PHASE3_STATUS=$(grep '"status"' "$PHASE3_FILE" | head -1 | grep -o '"in_progress"' || echo "")
+    if [ -n "$PHASE3_STATUS" ]; then
+        EPICS_PLANNED=$(grep '"epicsPlanned"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        EPICS_CREATED=$(grep '"epicsCreated"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        TASKS_PLANNED=$(grep '"tasksPlanned"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        TASKS_CREATED=$(grep '"tasksCreated"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        PHASE3_PROGRESS="Epics: ${EPICS_CREATED}/${EPICS_PLANNED}, Tasks: ${TASKS_CREATED}/${TASKS_PLANNED}"
+    fi
+fi
+
 cat << 'EOF'
 PRE-COMPACT: Before context is compacted, you MUST save critical state.
 
 ## IMMEDIATE ACTIONS (Do these NOW before compaction):
+EOF
+
+# Special handling for Phase 3 in-progress
+if [ -n "$PHASE3_STATUS" ]; then
+    cat << EOF
+
+### PHASE 3 IN PROGRESS - CRITICAL
+**Epic/Task creation is incomplete!**
+Progress: ${PHASE3_PROGRESS}
+
+The file \`.claude/memories/phase3-progress.json\` tracks your progress.
+After compaction:
+1. Read \`.claude/memories/phase3-progress.json\`
+2. Compare \`createdEpics\` vs \`plannedEpics\`
+3. Compare \`createdTasks\` vs \`plannedTasks\`
+4. Resume creating from first uncreated epic/task
+5. DO NOT re-invoke @scrum-master - plan already exists
+
+Before compaction NOW:
+1. Update \`lastUpdatedAt\` timestamp
+2. Ensure \`currentEpic\` and \`currentTask\` reflect current state
+3. Add checkpoint entry with current progress
+
+EOF
+fi
+
+cat << 'EOF'
 
 ### 1. Session File - Update with Current State
 If working on a session, update `.claude/memories/sessions/active/session-*.md`:
@@ -81,6 +124,7 @@ After compaction, you will NOT remember:
 - Git history and commits
 - Task registry state
 - Progress notes
+- Phase 3 progress file (if exists)
 
 ---
 EOF

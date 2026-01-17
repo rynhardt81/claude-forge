@@ -32,6 +32,20 @@ else
     echo "S:NONE"
 fi
 
+# Check for Phase 3 in-progress (incomplete epic/task creation)
+PHASE3_FILE="$CLAUDE_DIR/memories/phase3-progress.json"
+if [ -f "$PHASE3_FILE" ]; then
+    PHASE3_STATUS=$(grep '"status"' "$PHASE3_FILE" | head -1 | grep -o '"in_progress"' || echo "")
+    if [ -n "$PHASE3_STATUS" ]; then
+        EPICS_PLANNED=$(grep '"epicsPlanned"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        EPICS_CREATED=$(grep '"epicsCreated"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        TASKS_PLANNED=$(grep '"tasksPlanned"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        TASKS_CREATED=$(grep '"tasksCreated"' "$PHASE3_FILE" | grep -o '[0-9]*' | head -1 || echo "0")
+        echo "P3:INCOMPLETE E${EPICS_CREATED}/${EPICS_PLANNED} T${TASKS_CREATED}/${TASKS_PLANNED}"
+        echo "->Resume Phase 3: Read .claude/memories/phase3-progress.json"
+    fi
+fi
+
 # Registry status
 if [ -f "$PROJECT_ROOT/docs/tasks/registry.json" ]; then
     # Use jq if available for accurate counts, fallback to grep

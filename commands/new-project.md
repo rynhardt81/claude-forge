@@ -397,7 +397,32 @@ Review architecture decisions and continue to Feature Planning?
 
 ## Phase 3: Task Planning (ALL except --minimal)
 
-### 3.1 Invoke @scrum-master
+**CRITICAL: Phase 3 must survive context compaction.** All progress is tracked in `.claude/memories/phase3-progress.json` to enable resume.
+
+### 3.0 Check for Incomplete Phase 3 (MUST DO FIRST)
+
+Before starting Phase 3, check if there's incomplete work:
+
+```bash
+# Check for existing phase3-progress.json
+if [ -f ".claude/memories/phase3-progress.json" ]; then
+  status=$(grep '"status"' .claude/memories/phase3-progress.json | head -1)
+  if [[ "$status" == *"in_progress"* ]]; then
+    echo "INCOMPLETE PHASE 3 DETECTED - Resume required"
+  fi
+fi
+```
+
+**If incomplete Phase 3 found:**
+1. Read `.claude/memories/phase3-progress.json`
+2. Compare `createdEpics` vs `plannedEpics`
+3. Compare `createdTasks` vs `plannedTasks`
+4. Resume from first uncreated epic/task
+5. DO NOT re-invoke @scrum-master (plan already exists)
+
+### 3.1 Invoke @scrum-master (First Time Only)
+
+**Skip if resuming from incomplete Phase 3.**
 
 Use Task tool to invoke scrum-master agent.
 
@@ -408,47 +433,119 @@ Use Task tool to invoke scrum-master agent.
 
 **Key Principle:** Each task must be completable in a single session to avoid context window exhaustion.
 
-### 3.2 Create Epic/Task Structure
+### 3.2 Initialize Phase 3 Progress Tracking
 
-#### 3.2.1 Initialize Task Registry
+**IMMEDIATELY after @scrum-master returns the plan, BEFORE creating any files:**
+
+Create `.claude/memories/phase3-progress.json`:
+
+```json
+{
+  "phase": "3",
+  "phaseName": "Task Planning",
+  "status": "in_progress",
+  "startedAt": "[TIMESTAMP]",
+  "lastUpdatedAt": "[TIMESTAMP]",
+  "completedAt": null,
+
+  "plannedEpics": [
+    {"id": "E01", "name": "Authentication", "taskCount": 3},
+    {"id": "E02", "name": "Dashboard", "taskCount": 2}
+  ],
+  "createdEpics": [],
+
+  "plannedTasks": [
+    {"id": "T001", "epic": "E01", "name": "Setup auth"},
+    {"id": "T002", "epic": "E01", "name": "Login form"},
+    {"id": "T003", "epic": "E01", "name": "Session mgmt"},
+    {"id": "T004", "epic": "E02", "name": "Layout"},
+    {"id": "T005", "epic": "E02", "name": "Charts"}
+  ],
+  "createdTasks": [],
+
+  "currentEpic": null,
+  "currentTask": null,
+
+  "summary": {
+    "epicsPlanned": 2,
+    "epicsCreated": 0,
+    "tasksPlanned": 5,
+    "tasksCreated": 0
+  },
+
+  "checkpoints": [],
+  "resumeInstructions": "Resume from first uncreated epic"
+}
+```
+
+**This file is the source of truth for Phase 3 progress.** It survives context compaction.
+
+### 3.3 Create Epic/Task Structure (With Incremental Tracking)
+
+#### 3.3.1 Initialize Task Registry
 
 Create `docs/tasks/registry.json` using template `templates/task-registry.json`.
 
-#### 3.2.2 Create Project Config
+#### 3.3.2 Create Project Config
 
 Create `docs/tasks/config.json` using template `templates/config.json`.
 
-#### 3.2.3 Create Epic Files
+#### 3.3.3 Create Epic Files (ONE AT A TIME with Progress Updates)
 
-For each epic, create a file structure:
+**CRITICAL: Update progress file after EACH epic and task creation.**
 
+For each epic in `plannedEpics`:
+
+1. **Update currentEpic** in phase3-progress.json:
+   ```json
+   "currentEpic": "E01"
+   ```
+
+2. **Create epic directory and file:**
+   ```
+   docs/epics/E01-authentication/
+   ├── E01-authentication.md
+   └── tasks/
+   ```
+   Use template: `templates/epic-minimal.md`
+
+3. **Create all tasks for this epic (one at a time):**
+
+   For each task in this epic:
+   - Update `currentTask` in phase3-progress.json
+   - Create task file using `templates/task.md`
+   - **IMMEDIATELY** add task to `createdTasks` array
+   - Update `summary.tasksCreated`
+   - Update `lastUpdatedAt`
+
+4. **Mark epic complete:**
+   - Add epic to `createdEpics` array
+   - Update `summary.epicsCreated`
+   - Set `currentEpic` to null
+   - Add checkpoint entry
+
+5. **Repeat for next epic**
+
+**Example progress after creating T001:**
+```json
+{
+  "createdTasks": [
+    {"id": "T001", "epic": "E01", "name": "Setup auth", "createdAt": "..."}
+  ],
+  "currentEpic": "E01",
+  "summary": {"epicsPlanned": 2, "epicsCreated": 0, "tasksPlanned": 5, "tasksCreated": 1},
+  "checkpoints": [{"timestamp": "...", "action": "Created T001", "progress": "1/5 tasks"}]
+}
 ```
-docs/epics/
-├── E01-authentication/
-│   ├── E01-authentication.md      # Epic file
-│   └── tasks/
-│       ├── T001-setup-auth.md     # Task files
-│       ├── T002-login-form.md
-│       └── T003-session-mgmt.md
-├── E02-dashboard/
-│   ├── E02-dashboard.md
-│   └── tasks/
-│       ├── T004-layout.md
-│       └── T005-charts.md
-```
 
-Use templates:
-- `templates/epic-minimal.md` for epic files
-- `templates/task.md` for task files
-
-#### 3.2.4 Define Dependencies
+#### 3.3.4 Define Dependencies
 
 - **Epic-Level:** E02 depends on E01 completing
 - **Task-Level:** T002 depends on T001
 - **Cross-Epic:** T010 may depend on T003 from another epic
 - **Validate:** No circular dependencies (A → B → C → A is invalid)
 
-### 3.3 Map to Categories
+### 3.4 Map to Categories
 
 Map each task to one of 20 categories (see `.claude/skills/new-project/FEATURE-CATEGORIES.md`):
 - A: Security & Auth
@@ -472,11 +569,11 @@ Map each task to one of 20 categories (see `.claude/skills/new-project/FEATURE-C
 - S: Documentation
 - T: UI Polish
 
-### 3.4 Calculate Ready Tasks
+### 3.5 Calculate Ready Tasks
 
 After defining dependencies, mark tasks as "ready" if all dependencies are completed.
 
-### 3.5 Output (varies by mode)
+### 3.6 Output (varies by mode)
 
 **Standard Mode (no --autonomous):**
 - Create epic/task file structure in `docs/epics/`
@@ -488,16 +585,30 @@ After defining dependencies, mark tasks as "ready" if all dependencies are compl
 - Also create `features.db` for MCP server compatibility
 - Ready for `/implement-features` automation
 
-### 3.6 Update Progress Notes
+### 3.7 Mark Phase 3 Complete
 
-Append to `.claude/memories/progress-notes.md`:
-- Phase 3 completion with task summary
-- Number of epics and tasks created
-- Number of ready tasks (no dependencies)
-- Project status (initialization complete)
-- What's ready for (manual dev or autonomous)
+**ONLY mark complete after ALL epics and tasks are created:**
 
-### 3.7 Update Latest Session
+1. **Verify completion:**
+   - `summary.epicsCreated === summary.epicsPlanned`
+   - `summary.tasksCreated === summary.tasksPlanned`
+
+2. **Update phase3-progress.json:**
+   ```json
+   {
+     "status": "completed",
+     "completedAt": "[TIMESTAMP]",
+     "resumeInstructions": null
+   }
+   ```
+
+3. **Append to progress-notes.md:**
+   - Phase 3 completion with task summary
+   - Number of epics and tasks created
+   - Number of ready tasks (no dependencies)
+   - Project status (initialization complete)
+
+### 3.8 Update Latest Session
 
 Update `.claude/memories/sessions/latest.md` with:
 - Current date/time
@@ -508,7 +619,7 @@ Update `.claude/memories/sessions/latest.md` with:
 
 This ensures `/reflect resume` can pick up where initialization left off.
 
-### 3.8 Checkpoint
+### 3.9 Checkpoint
 
 ```
 ## Phase 3 Complete: Tasks Planned
@@ -527,6 +638,7 @@ This ensures `/reflect resume` can pick up where initialization left off.
 
 ✅ Progress notes updated
 ✅ Session state saved
+✅ Phase 3 progress file marked complete
 
 [If not autonomous]:
 Project ready for development!

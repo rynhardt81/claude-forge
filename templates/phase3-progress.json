@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Phase 3 progress tracking for epic/task creation - survives context compaction",
+  "phase": "3",
+  "phaseName": "Task Planning",
+  "status": "not_started",
+  "startedAt": null,
+  "lastUpdatedAt": null,
+  "completedAt": null,
+
+  "plannedEpics": [],
+  "createdEpics": [],
+
+  "plannedTasks": [],
+  "createdTasks": [],
+
+  "currentEpic": null,
+  "currentTask": null,
+
+  "summary": {
+    "epicsPlanned": 0,
+    "epicsCreated": 0,
+    "tasksPlanned": 0,
+    "tasksCreated": 0
+  },
+
+  "checkpoints": [],
+
+  "resumeInstructions": null
+}

@@ -82,10 +82,14 @@ Exceptions: Framework files (.claude/, hooks/, CLAUDE.md) bypass gates.
 ```
 === FORGE ===
 S:20240115-143022-a7x9    # Session ID (or NONE)
+P3:INCOMPLETE E2/5 T8/20  # Phase 3 incomplete (if applicable)
+->Resume Phase 3: Read .claude/memories/phase3-progress.json
 T:5/20|R3|A1              # 5/20 done, 3 ready, 1 active (or NONE)
 G:s+r+t+sk+ag             # Gates: session+registry+task+skill+agent
 ===
 ```
+
+**Phase 3 Detection:** If `/new-project` was interrupted during epic/task creation, this hook detects the incomplete state and reminds to resume.
 
 ### validate-edit.sh
 
