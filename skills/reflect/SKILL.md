@@ -256,11 +256,42 @@ Resume a specific task.
 - [BUG-015] Connection Pool Exhaustion
 ```
 
-6. **Acquire Lock**
+6. **Detect Agent and Load Summary**
+
+   Analyze task to determine the appropriate agent:
+
+   **Keyword Detection Table:**
+   | Task Contains | Agent | Summary File |
+   |---------------|-------|--------------|
+   | auth, login, password, token, session, security, encrypt, credential | @security-boss | `agents/summaries/security-boss.md` |
+   | payment, billing, checkout, stripe, subscription | @security-boss | `agents/summaries/security-boss.md` |
+   | test, verify, QA, acceptance, coverage, regression | @quality-engineer | `agents/summaries/quality-engineer.md` |
+   | architecture, ADR, design system, database design, schema | @architect | `agents/summaries/architect.md` |
+   | UI, UX, component, layout, style, accessibility, responsive | @ux-designer | `agents/summaries/ux-designer.md` |
+   | API, endpoint, integration, REST, GraphQL, webhook | @api-tester | `agents/summaries/api-tester.md` |
+   | performance, optimize, slow, latency, cache, memory | @performance-enhancer | `agents/summaries/performance-enhancer.md` |
+   | deploy, CI/CD, pipeline, docker, kubernetes, infrastructure | @devops | `agents/summaries/devops.md` |
+   | (no match / general implementation) | @developer | `agents/summaries/developer.md` |
+
+   **Detection Algorithm:**
+   ```
+   1. Extract task title, description, and acceptance criteria text
+   2. Convert to lowercase for matching
+   3. Check keywords in priority order (security first - it overrides all)
+   4. If security keywords found → @security-boss (NEVER parallelize)
+   5. Otherwise, match first keyword group found
+   6. Default to @developer if no matches
+   ```
+
+   **Load Summary:**
+   - Read the matched summary file (~80-100 tokens)
+   - This becomes the behavioral guidance for task execution
+
+7. **Acquire Lock**
    - Set task status to `in_progress`
    - Record session ID and timestamp in lock
 
-7. **Present Task Context**
+8. **Present Task Context**
 
 ```markdown
 ## Resuming Task T002: [Task Name]
@@ -268,6 +299,10 @@ Resume a specific task.
 **Session ID:** {your-session-id}
 **Epic:** E01 - [Epic Name]
 **Status:** continuation → in_progress (locked)
+
+### Agent: @developer
+**Constraints:** No code without requirements, tests alongside implementation, errors explicit
+**Workflow:** Understand → Plan → Implement → Verify → Complete
 
 ### Continuation Context
 **Last Session:** 2024-01-15
@@ -291,6 +326,8 @@ Resume a specific task.
 
 Ready to continue?
 ```
+
+**Note:** The Agent section shows a condensed version. The full summary was loaded and should guide your execution. Key constraints and workflow from the summary apply throughout this task.
 
 ---
 
